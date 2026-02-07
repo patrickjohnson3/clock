@@ -16,6 +16,7 @@
     pinkNoise: false,
     rainStorm: false,
     aircraftCabin: false,
+    dubTechno: false,
     soundVolume: 100,
     lightMode: false,
     matrixMode: false,
@@ -42,6 +43,7 @@
         pinkNoise: document.getElementById('pinkNoiseToggle'),
         rainStorm: document.getElementById('rainStormToggle'),
         aircraftCabin: document.getElementById('aircraftCabinToggle'),
+        dubTechno: document.getElementById('dubTechnoToggle'),
         persistStorage: document.getElementById('storageToggle')
       },
       fontSelect: document.getElementById('fontSelect'),
@@ -79,6 +81,7 @@
       refs.toggles.pinkNoise.checked = state.pinkNoise;
       refs.toggles.rainStorm.checked = state.rainStorm;
       refs.toggles.aircraftCabin.checked = state.aircraftCabin;
+      refs.toggles.dubTechno.checked = state.dubTechno;
       refs.toggles.persistStorage.checked = state.persistStorage;
       refs.soundVolumeSlider.value = String(state.soundVolume);
 
@@ -156,6 +159,7 @@
         pinkNoise: typeof saved.pinkNoise === 'boolean' ? saved.pinkNoise : defaults.pinkNoise,
         rainStorm: typeof saved.rainStorm === 'boolean' ? saved.rainStorm : defaults.rainStorm,
         aircraftCabin: typeof saved.aircraftCabin === 'boolean' ? saved.aircraftCabin : defaults.aircraftCabin,
+        dubTechno: typeof saved.dubTechno === 'boolean' ? saved.dubTechno : defaults.dubTechno,
         soundVolume: Number.isFinite(saved.soundVolume)
           ? Math.max(0, Math.min(100, saved.soundVolume))
           : defaults.soundVolume,
@@ -905,6 +909,214 @@
     return { start, stop, setVolume };
   })();
 
+  const dubTechno = (() => {
+    const bpm = 108;
+    const scheduleAheadTime = 0.2;
+    const lookaheadMs = 50;
+    const baseVolume = 0.11;
+
+    let audioContext = null;
+    let masterGain = null;
+    let duckGain = null;
+    let padGain = null;
+    let hatGain = null;
+    let padFilter = null;
+    let lfo = null;
+    let lfoDepth = null;
+    let padOscA = null;
+    let padOscB = null;
+    let noiseBuffer = null;
+    let schedulerId = null;
+    let nextStepTime = 0;
+    let stepIndex = 0;
+    let volume = 1;
+
+    function ensureContext() {
+      if (audioContext) {
+        return audioContext;
+      }
+
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) {
+        return null;
+      }
+
+      audioContext = new AudioContextClass();
+
+      masterGain = audioContext.createGain();
+      masterGain.gain.value = baseVolume * volume;
+      masterGain.connect(audioContext.destination);
+
+      duckGain = audioContext.createGain();
+      duckGain.gain.value = 1;
+      duckGain.connect(masterGain);
+
+      padGain = audioContext.createGain();
+      padGain.gain.value = 0.17;
+      padGain.connect(duckGain);
+
+      hatGain = audioContext.createGain();
+      hatGain.gain.value = 0.085;
+      hatGain.connect(duckGain);
+
+      padFilter = audioContext.createBiquadFilter();
+      padFilter.type = 'lowpass';
+      padFilter.frequency.value = 900;
+      padFilter.Q.value = 0.4;
+      padFilter.connect(padGain);
+
+      lfoDepth = audioContext.createGain();
+      lfoDepth.gain.value = 120;
+      lfoDepth.connect(padFilter.frequency);
+
+      lfo = audioContext.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.value = 0.045;
+      lfo.connect(lfoDepth);
+      lfo.start();
+
+      const length = Math.floor(audioContext.sampleRate * 2);
+      noiseBuffer = audioContext.createBuffer(1, length, audioContext.sampleRate);
+      const channel = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < length; i += 1) {
+        channel[i] = Math.random() * 2 - 1;
+      }
+
+      return audioContext;
+    }
+
+    function createPadOsc(frequency, detune) {
+      const osc = audioContext.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.value = frequency;
+      osc.detune.value = detune;
+      osc.connect(padFilter);
+      osc.start();
+      return osc;
+    }
+
+    function scheduleKick(time) {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      const kickFilter = audioContext.createBiquadFilter();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(90, time);
+      osc.frequency.exponentialRampToValueAtTime(46, time + 0.2);
+
+      gain.gain.setValueAtTime(0.0001, time);
+      gain.gain.linearRampToValueAtTime(0.42, time + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.24);
+
+      kickFilter.type = 'lowpass';
+      kickFilter.frequency.value = 220;
+      kickFilter.Q.value = 0.5;
+
+      osc.connect(kickFilter);
+      kickFilter.connect(gain);
+      gain.connect(duckGain);
+
+      osc.start(time);
+      osc.stop(time + 0.28);
+
+      duckGain.gain.cancelScheduledValues(time);
+      duckGain.gain.setValueAtTime(duckGain.gain.value, time);
+      duckGain.gain.setTargetAtTime(0.62, time, 0.015);
+      duckGain.gain.setTargetAtTime(1, time + 0.18, 0.2);
+    }
+
+    function scheduleHat(time) {
+      const source = audioContext.createBufferSource();
+      const filter = audioContext.createBiquadFilter();
+      const gain = audioContext.createGain();
+      const brightness = 2500 + Math.random() * 2200;
+
+      source.buffer = noiseBuffer;
+
+      filter.type = 'bandpass';
+      filter.frequency.value = brightness;
+      filter.Q.value = 0.9;
+
+      gain.gain.setValueAtTime(0.0001, time);
+      gain.gain.linearRampToValueAtTime(0.06, time + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.12);
+
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(hatGain);
+
+      source.start(time);
+      source.stop(time + 0.14);
+    }
+
+    function schedule() {
+      if (!audioContext) {
+        return;
+      }
+
+      const stepDuration = (60 / bpm) / 2;
+      while (nextStepTime < audioContext.currentTime + scheduleAheadTime) {
+        if (stepIndex % 2 === 0) {
+          scheduleKick(nextStepTime);
+        }
+        if (stepIndex % 2 === 1 || Math.random() < 0.16) {
+          scheduleHat(nextStepTime);
+        }
+        stepIndex += 1;
+        nextStepTime += stepDuration;
+      }
+    }
+
+    function start() {
+      const context = ensureContext();
+      if (!context || schedulerId !== null) {
+        return;
+      }
+
+      if (context.state === 'suspended') {
+        context.resume().catch(() => {});
+      }
+
+      if (!padOscA) {
+        padOscA = createPadOsc(82.41, -6);
+      }
+      if (!padOscB) {
+        padOscB = createPadOsc(123.47, 5);
+      }
+
+      stepIndex = 0;
+      nextStepTime = context.currentTime + 0.05;
+      schedulerId = window.setInterval(schedule, lookaheadMs);
+    }
+
+    function stop() {
+      if (schedulerId !== null) {
+        window.clearInterval(schedulerId);
+        schedulerId = null;
+      }
+
+      if (padOscA) {
+        padOscA.stop();
+        padOscA.disconnect();
+        padOscA = null;
+      }
+      if (padOscB) {
+        padOscB.stop();
+        padOscB.disconnect();
+        padOscB = null;
+      }
+    }
+
+    function setVolume(nextVolume) {
+      volume = Math.max(0, Math.min(1, nextVolume));
+      if (masterGain) {
+        masterGain.gain.value = baseVolume * volume;
+      }
+    }
+
+    return { start, stop, setVolume };
+  })();
+
   let state = settings.load();
   if (state.matrixMode && (!state.matrix || !state.neon)) {
     state = { ...state, matrix: true, neon: true };
@@ -932,6 +1144,7 @@
     pinkNoise.setVolume(globalSoundVolume);
     rainStorm.setVolume(globalSoundVolume);
     aircraftCabin.setVolume(globalSoundVolume);
+    dubTechno.setVolume(globalSoundVolume);
 
     if (state.brownNoise) {
       brownNoise.start();
@@ -957,6 +1170,12 @@
       aircraftCabin.stop();
     }
 
+    if (state.dubTechno) {
+      dubTechno.start();
+    } else {
+      dubTechno.stop();
+    }
+
     clock.render(state);
   }
 
@@ -977,6 +1196,7 @@
   ui.bindToggle(ui.refs.toggles.pinkNoise, (checked) => updateState({ pinkNoise: checked }));
   ui.bindToggle(ui.refs.toggles.rainStorm, (checked) => updateState({ rainStorm: checked }));
   ui.bindToggle(ui.refs.toggles.aircraftCabin, (checked) => updateState({ aircraftCabin: checked }));
+  ui.bindToggle(ui.refs.toggles.dubTechno, (checked) => updateState({ dubTechno: checked }));
   ui.bindRange(ui.refs.soundVolumeSlider, (value) => updateState({ soundVolume: Number(value) }));
   ui.bindSelect(ui.refs.modeSelect, (mode) => updateState({
     lightMode: mode === 'light',
