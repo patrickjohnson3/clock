@@ -298,6 +298,12 @@ strong {
   font: inherit;
 }
 
+#controls option,
+#controls optgroup {
+  background: #fff;
+  color: #111;
+}
+
 #controls select:focus-visible {
   outline: 1px solid var(--panel-border);
   outline-offset: 2px;
