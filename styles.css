@@ -215,10 +215,10 @@ strong {
   border: 1px solid var(--panel-border);
   border-top: 0;
   border-radius: 0 0 8px 8px;
-  width: 136px;
-  height: 26px;
+  width: 76px;
+  height: 12px;
   padding: 0;
-  font-size: 0.7rem;
+  font-size: 0;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -226,7 +226,7 @@ strong {
   opacity: 0;
   pointer-events: none;
   overflow: hidden;
-  line-height: 1;
+  line-height: 0;
   transform: translateX(-50%) translateY(-120%);
   transition:
     opacity 0.2s ease,
@@ -247,15 +247,15 @@ strong {
 }
 
 #controls.collapsed + #panelTab {
-  opacity: 0.78;
+  opacity: 0.4;
   pointer-events: auto;
   transform: translateX(-50%) translateY(0);
 }
 
 #controls.collapsed + #panelTab:hover,
 #controls.collapsed + #panelTab:focus-visible {
-  opacity: 1;
-  height: 30px;
+  opacity: 0.7;
+  height: 16px;
 }
 
 #panelTab:focus-visible {
