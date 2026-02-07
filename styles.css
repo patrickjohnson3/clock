@@ -309,6 +309,17 @@ strong {
   background: #2a2a2a;
 }
 
+body.light-mode #controls option,
+body.light-mode #controls optgroup {
+  background: #d4d4d4;
+  color: #1e1e1e;
+}
+
+body.light-mode #controls option:checked,
+body.light-mode #controls option:hover {
+  background: #c6c6c6;
+}
+
 #controls select:focus-visible {
   outline: 1px solid var(--panel-border);
   outline-offset: 2px;
