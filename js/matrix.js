@@ -1,5 +1,5 @@
 export function createMatrix({ canvas, chars, tuning }) {
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas?.getContext?.("2d") ?? null;
 
   let columns = 0;
   let drops = [];
@@ -8,6 +8,9 @@ export function createMatrix({ canvas, chars, tuning }) {
   let fg = "#fff";
 
   function refreshStyles() {
+    if (!ctx) {
+      return;
+    }
     const bodyStyle = getComputedStyle(document.body);
     matrixTrail =
       bodyStyle.getPropertyValue("--matrix-trail").trim() ||
@@ -16,12 +19,20 @@ export function createMatrix({ canvas, chars, tuning }) {
   }
 
   function rebuildDrops() {
+    if (!ctx || !canvas) {
+      columns = 0;
+      drops = [];
+      return;
+    }
     const previous = drops;
     columns = Math.floor(canvas.width / tuning.fontSize);
     drops = Array.from({ length: columns }, (_, index) => previous[index] || 1);
   }
 
   function resize() {
+    if (!ctx || !canvas) {
+      return;
+    }
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     rebuildDrops();
@@ -29,10 +40,16 @@ export function createMatrix({ canvas, chars, tuning }) {
   }
 
   function clear() {
+    if (!ctx || !canvas) {
+      return;
+    }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
   function draw() {
+    if (!ctx || !canvas) {
+      return;
+    }
     ctx.fillStyle = matrixTrail;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -58,6 +75,9 @@ export function createMatrix({ canvas, chars, tuning }) {
   }
 
   function start() {
+    if (!ctx) {
+      return;
+    }
     if (timerId !== null) {
       return;
     }

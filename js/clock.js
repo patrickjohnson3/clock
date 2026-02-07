@@ -54,6 +54,9 @@ export function createClock({ container, chars, tuning }) {
   }
 
   function ensureSpan(index) {
+    if (!container) {
+      return null;
+    }
     if (spans[index]) {
       return spans[index];
     }
@@ -76,6 +79,10 @@ export function createClock({ container, chars, tuning }) {
   }
 
   function trimSpans(keepLength) {
+    if (!container) {
+      spans.length = 0;
+      return;
+    }
     while (spans.length > keepLength) {
       const span = spans.pop();
       span.remove();
@@ -88,6 +95,9 @@ export function createClock({ container, chars, tuning }) {
     for (let i = 0; i < time.length; i += 1) {
       const char = time[i];
       const span = ensureSpan(i);
+      if (!span) {
+        return;
+      }
 
       if (span.textContent !== char) {
         span.textContent = char;

@@ -27,6 +27,19 @@ const settings = createSettings({
   normalizeState,
 });
 
+let sharedAudioContext = null;
+function getSharedAudioContext() {
+  if (sharedAudioContext) {
+    return sharedAudioContext;
+  }
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) {
+    return null;
+  }
+  sharedAudioContext = new AudioContextClass();
+  return sharedAudioContext;
+}
+
 const matrix = createMatrix({
   canvas: ui.refs.canvas,
   chars: CHARS,
@@ -40,14 +53,26 @@ const clock = createClock({
 });
 
 const soundManager = createSoundManager({
-  brownNoise: createBrownNoiseEngine(TUNING.audio.brownNoise),
-  pinkNoise: createPinkNoiseEngine(TUNING.audio.pinkNoise),
-  rainStorm: createRainStormEngine(TUNING.audio.rainStorm),
-  aircraftCabin: createAircraftCabinEngine(TUNING.audio.aircraftCabin),
-  dubTechno: createDubTechnoEngine(TUNING.audio.dubTechno),
+  brownNoise: createBrownNoiseEngine(TUNING.audio.brownNoise, {
+    getContext: getSharedAudioContext,
+  }),
+  pinkNoise: createPinkNoiseEngine(TUNING.audio.pinkNoise, {
+    getContext: getSharedAudioContext,
+  }),
+  rainStorm: createRainStormEngine(TUNING.audio.rainStorm, {
+    getContext: getSharedAudioContext,
+  }),
+  aircraftCabin: createAircraftCabinEngine(TUNING.audio.aircraftCabin, {
+    getContext: getSharedAudioContext,
+  }),
+  dubTechno: createDubTechnoEngine(TUNING.audio.dubTechno, {
+    getContext: getSharedAudioContext,
+  }),
 });
 
 let state = settings.load();
+let saveTimerId = null;
+let clockTimerId = null;
 ui.setControlsFromState(state);
 
 function renderVisuals(nextState) {
@@ -58,7 +83,7 @@ function renderVisuals(nextState) {
   document.body.style.fontFamily = nextState.font;
   matrix.refreshStyles();
 
-  if (nextState.matrix) {
+  if (nextState.matrix && !document.hidden) {
     matrix.start();
   } else {
     matrix.stop();
@@ -85,11 +110,29 @@ function render() {
   renderClock(state);
 }
 
+function flushSave() {
+  if (saveTimerId !== null) {
+    window.clearTimeout(saveTimerId);
+    saveTimerId = null;
+  }
+  settings.save(state);
+}
+
+function scheduleSave() {
+  if (saveTimerId !== null) {
+    window.clearTimeout(saveTimerId);
+  }
+  saveTimerId = window.setTimeout(() => {
+    saveTimerId = null;
+    settings.save(state);
+  }, 120);
+}
+
 function updateState(partial) {
   state = normalizeState({ ...state, ...partial });
   render();
   ui.setControlsFromState(state);
-  settings.save(state);
+  scheduleSave();
 }
 
 ui.bindToggle(ui.refs.toggles.glitch, (checked) =>
@@ -152,7 +195,36 @@ window.addEventListener("resize", () => {
 });
 
 render();
-window.setInterval(() => renderClock(state), 1000);
+
+function startClockTicker() {
+  if (clockTimerId !== null || document.hidden) {
+    return;
+  }
+  clockTimerId = window.setInterval(() => renderClock(state), 1000);
+}
+
+function stopClockTicker() {
+  if (clockTimerId === null) {
+    return;
+  }
+  window.clearInterval(clockTimerId);
+  clockTimerId = null;
+}
+
+startClockTicker();
+
+window.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    stopClockTicker();
+    matrix.stop();
+    return;
+  }
+
+  startClockTicker();
+  if (state.matrix) {
+    matrix.start();
+  }
+});
 
 window.matrixClock = {
   getState: () => ({ ...state }),
@@ -160,5 +232,6 @@ window.matrixClock = {
 };
 
 window.addEventListener("beforeunload", () => {
+  flushSave();
   soundManager.stopAll();
 });

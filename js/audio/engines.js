@@ -2,7 +2,11 @@ function clampVolume(value) {
   return Math.max(0, Math.min(1, value));
 }
 
-export function createBrownNoiseEngine(config) {
+function getAudioContextFactory() {
+  return window.AudioContext || window.webkitAudioContext;
+}
+
+export function createBrownNoiseEngine(config, { getContext } = {}) {
   let audioContext = null;
   let gainNode = null;
   let sourceNode = null;
@@ -13,12 +17,19 @@ export function createBrownNoiseEngine(config) {
       return audioContext;
     }
 
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) {
-      return null;
+    if (getContext) {
+      audioContext = getContext();
+    } else {
+      const AudioContextClass = getAudioContextFactory();
+      if (!AudioContextClass) {
+        return null;
+      }
+      audioContext = new AudioContextClass();
     }
 
-    audioContext = new AudioContextClass();
+    if (!audioContext) {
+      return null;
+    }
     gainNode = audioContext.createGain();
     gainNode.gain.value = config.baseVolume * volume;
     gainNode.connect(audioContext.destination);
@@ -80,7 +91,7 @@ export function createBrownNoiseEngine(config) {
   return { start, stop, setVolume };
 }
 
-export function createPinkNoiseEngine(config) {
+export function createPinkNoiseEngine(config, { getContext } = {}) {
   let audioContext = null;
   let gainNode = null;
   let highShelfNode = null;
@@ -92,12 +103,19 @@ export function createPinkNoiseEngine(config) {
       return audioContext;
     }
 
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) {
-      return null;
+    if (getContext) {
+      audioContext = getContext();
+    } else {
+      const AudioContextClass = getAudioContextFactory();
+      if (!AudioContextClass) {
+        return null;
+      }
+      audioContext = new AudioContextClass();
     }
 
-    audioContext = new AudioContextClass();
+    if (!audioContext) {
+      return null;
+    }
     gainNode = audioContext.createGain();
     gainNode.gain.value = config.baseVolume * volume;
     gainNode.connect(audioContext.destination);
@@ -181,7 +199,7 @@ export function createPinkNoiseEngine(config) {
   return { start, stop, setVolume };
 }
 
-export function createRainStormEngine(config) {
+export function createRainStormEngine(config, { getContext } = {}) {
   let audioContext = null;
   let masterGain = null;
   let bodyGain = null;
@@ -198,12 +216,19 @@ export function createRainStormEngine(config) {
       return audioContext;
     }
 
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) {
-      return null;
+    if (getContext) {
+      audioContext = getContext();
+    } else {
+      const AudioContextClass = getAudioContextFactory();
+      if (!AudioContextClass) {
+        return null;
+      }
+      audioContext = new AudioContextClass();
     }
 
-    audioContext = new AudioContextClass();
+    if (!audioContext) {
+      return null;
+    }
     masterGain = audioContext.createGain();
     masterGain.gain.value = config.baseVolume * volume;
     masterGain.connect(audioContext.destination);
@@ -384,7 +409,7 @@ export function createRainStormEngine(config) {
   return { start, stop, setVolume };
 }
 
-export function createAircraftCabinEngine(config) {
+export function createAircraftCabinEngine(config, { getContext } = {}) {
   let audioContext = null;
   let masterGain = null;
   let bodyGain = null;
@@ -404,12 +429,19 @@ export function createAircraftCabinEngine(config) {
       return audioContext;
     }
 
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) {
-      return null;
+    if (getContext) {
+      audioContext = getContext();
+    } else {
+      const AudioContextClass = getAudioContextFactory();
+      if (!AudioContextClass) {
+        return null;
+      }
+      audioContext = new AudioContextClass();
     }
 
-    audioContext = new AudioContextClass();
+    if (!audioContext) {
+      return null;
+    }
     masterGain = audioContext.createGain();
     masterGain.gain.value = config.baseVolume * volume;
     masterGain.connect(audioContext.destination);
@@ -601,7 +633,7 @@ export function createAircraftCabinEngine(config) {
   return { start, stop, setVolume };
 }
 
-export function createDubTechnoEngine(config) {
+export function createDubTechnoEngine(config, { getContext } = {}) {
   let audioContext = null;
   let masterGain = null;
   let duckGain = null;
@@ -617,18 +649,26 @@ export function createDubTechnoEngine(config) {
   let nextStepTime = 0;
   let stepIndex = 0;
   let volume = 1;
+  let isRunning = false;
 
   function ensureContext() {
     if (audioContext) {
       return audioContext;
     }
 
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) {
-      return null;
+    if (getContext) {
+      audioContext = getContext();
+    } else {
+      const AudioContextClass = getAudioContextFactory();
+      if (!AudioContextClass) {
+        return null;
+      }
+      audioContext = new AudioContextClass();
     }
 
-    audioContext = new AudioContextClass();
+    if (!audioContext) {
+      return null;
+    }
 
     masterGain = audioContext.createGain();
     masterGain.gain.value = config.baseVolume * volume;
@@ -754,9 +794,36 @@ export function createDubTechnoEngine(config) {
     }
   }
 
+  function startScheduler() {
+    if (schedulerId !== null || !audioContext || document.hidden) {
+      return;
+    }
+    nextStepTime = audioContext.currentTime + 0.05;
+    schedulerId = window.setInterval(schedule, config.lookaheadMs);
+  }
+
+  function stopScheduler() {
+    if (schedulerId === null) {
+      return;
+    }
+    window.clearInterval(schedulerId);
+    schedulerId = null;
+  }
+
+  function handleVisibilityChange() {
+    if (!isRunning || !audioContext) {
+      return;
+    }
+    if (document.hidden) {
+      stopScheduler();
+      return;
+    }
+    startScheduler();
+  }
+
   function start() {
     const context = ensureContext();
-    if (!context || schedulerId !== null) {
+    if (!context || isRunning) {
       return;
     }
 
@@ -772,15 +839,15 @@ export function createDubTechnoEngine(config) {
     }
 
     stepIndex = 0;
-    nextStepTime = context.currentTime + 0.05;
-    schedulerId = window.setInterval(schedule, config.lookaheadMs);
+    isRunning = true;
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    startScheduler();
   }
 
   function stop() {
-    if (schedulerId !== null) {
-      window.clearInterval(schedulerId);
-      schedulerId = null;
-    }
+    isRunning = false;
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
+    stopScheduler();
 
     if (padOscA) {
       padOscA.stop();
