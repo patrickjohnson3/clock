@@ -30,7 +30,8 @@ export function createSettings({
     }
 
     return normalizeState({
-      glitch: typeof saved.glitch === "boolean" ? saved.glitch : defaults.glitch,
+      glitch:
+        typeof saved.glitch === "boolean" ? saved.glitch : defaults.glitch,
       glyph: typeof saved.glyph === "boolean" ? saved.glyph : defaults.glyph,
       hour24:
         typeof saved.hour24 === "boolean"
@@ -44,7 +45,8 @@ export function createSettings({
           : typeof saved.hideAmPm === "boolean"
             ? !saved.hideAmPm
             : defaults.showAmPm,
-      matrix: typeof saved.matrix === "boolean" ? saved.matrix : defaults.matrix,
+      matrix:
+        typeof saved.matrix === "boolean" ? saved.matrix : defaults.matrix,
       glow: typeof saved.glow === "boolean" ? saved.glow : defaults.glow,
       neon: typeof saved.neon === "boolean" ? saved.neon : defaults.neon,
       brownNoise:
@@ -52,22 +54,32 @@ export function createSettings({
           ? saved.brownNoise
           : defaults.brownNoise,
       pinkNoise:
-        typeof saved.pinkNoise === "boolean" ? saved.pinkNoise : defaults.pinkNoise,
+        typeof saved.pinkNoise === "boolean"
+          ? saved.pinkNoise
+          : defaults.pinkNoise,
       rainStorm:
-        typeof saved.rainStorm === "boolean" ? saved.rainStorm : defaults.rainStorm,
+        typeof saved.rainStorm === "boolean"
+          ? saved.rainStorm
+          : defaults.rainStorm,
       aircraftCabin:
         typeof saved.aircraftCabin === "boolean"
           ? saved.aircraftCabin
           : defaults.aircraftCabin,
       dubTechno:
-        typeof saved.dubTechno === "boolean" ? saved.dubTechno : defaults.dubTechno,
+        typeof saved.dubTechno === "boolean"
+          ? saved.dubTechno
+          : defaults.dubTechno,
       soundVolume: Number.isFinite(saved.soundVolume)
         ? saved.soundVolume
         : defaults.soundVolume,
       lightMode:
-        typeof saved.lightMode === "boolean" ? saved.lightMode : defaults.lightMode,
+        typeof saved.lightMode === "boolean"
+          ? saved.lightMode
+          : defaults.lightMode,
       matrixMode:
-        typeof saved.matrixMode === "boolean" ? saved.matrixMode : defaults.matrixMode,
+        typeof saved.matrixMode === "boolean"
+          ? saved.matrixMode
+          : defaults.matrixMode,
       font: typeof saved.font === "string" ? saved.font : defaults.font,
       persistStorage,
     });
@@ -75,7 +87,10 @@ export function createSettings({
 
   function save(state) {
     try {
-      localStorage.setItem(storageEnabledKey, JSON.stringify(state.persistStorage));
+      localStorage.setItem(
+        storageEnabledKey,
+        JSON.stringify(state.persistStorage),
+      );
 
       if (!state.persistStorage) {
         localStorage.removeItem(storageKey);

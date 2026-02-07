@@ -66,7 +66,10 @@ function renderVisuals(nextState) {
 }
 
 function renderAudio(nextState) {
-  const globalSoundVolume = Math.max(0, Math.min(1, nextState.soundVolume / 100));
+  const globalSoundVolume = Math.max(
+    0,
+    Math.min(1, nextState.soundVolume / 100),
+  );
   soundManager.setGlobalVolume(globalSoundVolume);
   soundManager.sync(nextState);
 }
@@ -88,24 +91,42 @@ function updateState(partial) {
   settings.save(state);
 }
 
-ui.bindToggle(ui.refs.toggles.glitch, (checked) => updateState({ glitch: checked }));
-ui.bindToggle(ui.refs.toggles.glyph, (checked) => updateState({ glyph: checked }));
-ui.bindToggle(ui.refs.toggles.hour24, (checked) => updateState({ hour24: checked }));
+ui.bindToggle(ui.refs.toggles.glitch, (checked) =>
+  updateState({ glitch: checked }),
+);
+ui.bindToggle(ui.refs.toggles.glyph, (checked) =>
+  updateState({ glyph: checked }),
+);
+ui.bindToggle(ui.refs.toggles.hour24, (checked) =>
+  updateState({ hour24: checked }),
+);
 ui.bindToggle(ui.refs.toggles.showAmPm, (checked) =>
   updateState({ showAmPm: checked }),
 );
-ui.bindToggle(ui.refs.toggles.matrix, (checked) => updateState({ matrix: checked }));
-ui.bindToggle(ui.refs.toggles.glow, (checked) => updateState({ glow: checked }));
-ui.bindToggle(ui.refs.toggles.neon, (checked) => updateState({ neon: checked }));
+ui.bindToggle(ui.refs.toggles.matrix, (checked) =>
+  updateState({ matrix: checked }),
+);
+ui.bindToggle(ui.refs.toggles.glow, (checked) =>
+  updateState({ glow: checked }),
+);
+ui.bindToggle(ui.refs.toggles.neon, (checked) =>
+  updateState({ neon: checked }),
+);
 ui.bindToggle(ui.refs.toggles.brownNoise, (checked) =>
   updateState({ brownNoise: checked }),
 );
-ui.bindToggle(ui.refs.toggles.pinkNoise, (checked) => updateState({ pinkNoise: checked }));
-ui.bindToggle(ui.refs.toggles.rainStorm, (checked) => updateState({ rainStorm: checked }));
+ui.bindToggle(ui.refs.toggles.pinkNoise, (checked) =>
+  updateState({ pinkNoise: checked }),
+);
+ui.bindToggle(ui.refs.toggles.rainStorm, (checked) =>
+  updateState({ rainStorm: checked }),
+);
 ui.bindToggle(ui.refs.toggles.aircraftCabin, (checked) =>
   updateState({ aircraftCabin: checked }),
 );
-ui.bindToggle(ui.refs.toggles.dubTechno, (checked) => updateState({ dubTechno: checked }));
+ui.bindToggle(ui.refs.toggles.dubTechno, (checked) =>
+  updateState({ dubTechno: checked }),
+);
 ui.bindRange(ui.refs.soundVolumeSlider, (value) =>
   updateState({ soundVolume: Number(value) }),
 );

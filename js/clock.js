@@ -53,7 +53,10 @@ export function createClock({ container, chars, tuning }) {
     span.addEventListener("mouseenter", () => {
       if (span.dataset.glitchEnabled === "true") {
         span.classList.add("glitch");
-        window.setTimeout(() => span.classList.remove("glitch"), tuning.hoverGlitchMs);
+        window.setTimeout(
+          () => span.classList.remove("glitch"),
+          tuning.hoverGlitchMs,
+        );
       }
     });
 

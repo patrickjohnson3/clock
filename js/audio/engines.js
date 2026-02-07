@@ -283,7 +283,10 @@ export function createRainStormEngine(config) {
       const nextTexture = 0.08 + Math.random() * 0.16;
       bodyGain.gain.setTargetAtTime(nextBody, now, 0.4);
       textureGain.gain.setTargetAtTime(nextTexture, now, 0.2);
-      variationTimerId = window.setTimeout(schedule, 600 + Math.random() * 1300);
+      variationTimerId = window.setTimeout(
+        schedule,
+        600 + Math.random() * 1300,
+      );
     };
 
     schedule();

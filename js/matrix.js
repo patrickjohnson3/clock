@@ -23,13 +23,15 @@ export function createMatrix({ canvas, chars, tuning }) {
 
   function draw() {
     const matrixTrail =
-      getComputedStyle(document.body).getPropertyValue("--matrix-trail").trim() ||
-      "rgba(0, 0, 0, 0.05)";
+      getComputedStyle(document.body)
+        .getPropertyValue("--matrix-trail")
+        .trim() || "rgba(0, 0, 0, 0.05)";
 
     ctx.fillStyle = matrixTrail;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const fg = getComputedStyle(document.body).getPropertyValue("--fg").trim() || "#fff";
+    const fg =
+      getComputedStyle(document.body).getPropertyValue("--fg").trim() || "#fff";
     ctx.font = `${tuning.fontSize}px monospace`;
 
     for (let i = 0; i < drops.length; i += 1) {
