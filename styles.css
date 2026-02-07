@@ -300,8 +300,13 @@ strong {
 
 #controls option,
 #controls optgroup {
-  background: #fff;
-  color: #111;
+  background: #1e1e1e;
+  color: #d4d4d4;
+}
+
+#controls option:checked,
+#controls option:hover {
+  background: #2a2a2a;
 }
 
 #controls select:focus-visible {
