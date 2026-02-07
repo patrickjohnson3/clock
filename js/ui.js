@@ -25,64 +25,93 @@ export function createUI(defaults) {
     soundVolumeSlider: document.getElementById("soundVolumeSlider"),
   };
 
+  function setChecked(el, value) {
+    if (el) {
+      el.checked = value;
+    }
+  }
+
+  function setValue(el, value) {
+    if (el) {
+      el.value = value;
+    }
+  }
+
   function bindToggle(toggleEl, onChange) {
+    if (!toggleEl) {
+      return;
+    }
     toggleEl.addEventListener("change", (event) => {
       onChange(event.target.checked);
     });
   }
 
   function bindSelect(selectEl, onChange) {
+    if (!selectEl) {
+      return;
+    }
     selectEl.addEventListener("change", (event) => {
       onChange(event.target.value);
     });
   }
 
   function bindRange(rangeEl, onChange) {
+    if (!rangeEl) {
+      return;
+    }
     rangeEl.addEventListener("input", (event) => {
       onChange(event.target.value);
     });
   }
 
   function setControlsFromState(state) {
-    refs.toggles.glitch.checked = state.glitch;
-    refs.toggles.glyph.checked = state.glyph;
-    refs.toggles.hour24.checked = state.hour24;
-    refs.toggles.showAmPm.checked = state.showAmPm;
-    refs.toggles.matrix.checked = state.matrix;
-    refs.toggles.glow.checked = state.glow;
-    refs.toggles.neon.checked = state.neon;
-    refs.toggles.brownNoise.checked = state.brownNoise;
-    refs.toggles.pinkNoise.checked = state.pinkNoise;
-    refs.toggles.rainStorm.checked = state.rainStorm;
-    refs.toggles.aircraftCabin.checked = state.aircraftCabin;
-    refs.toggles.dubTechno.checked = state.dubTechno;
-    refs.toggles.persistStorage.checked = state.persistStorage;
-    refs.soundVolumeSlider.value = String(state.soundVolume);
+    setChecked(refs.toggles.glitch, state.glitch);
+    setChecked(refs.toggles.glyph, state.glyph);
+    setChecked(refs.toggles.hour24, state.hour24);
+    setChecked(refs.toggles.showAmPm, state.showAmPm);
+    setChecked(refs.toggles.matrix, state.matrix);
+    setChecked(refs.toggles.glow, state.glow);
+    setChecked(refs.toggles.neon, state.neon);
+    setChecked(refs.toggles.brownNoise, state.brownNoise);
+    setChecked(refs.toggles.pinkNoise, state.pinkNoise);
+    setChecked(refs.toggles.rainStorm, state.rainStorm);
+    setChecked(refs.toggles.aircraftCabin, state.aircraftCabin);
+    setChecked(refs.toggles.dubTechno, state.dubTechno);
+    setChecked(refs.toggles.persistStorage, state.persistStorage);
+    setValue(refs.soundVolumeSlider, String(state.soundVolume));
 
-    refs.fontSelect.value = state.font;
-    if (refs.fontSelect.value !== state.font) {
-      refs.fontSelect.value = defaults.font;
+    if (refs.fontSelect) {
+      refs.fontSelect.value = state.font;
+      if (refs.fontSelect.value !== state.font) {
+        refs.fontSelect.value = defaults.font;
+      }
     }
 
-    refs.modeSelect.value = state.matrixMode
-      ? "matrix"
-      : state.lightMode
-        ? "light"
-        : "dark";
+    setValue(
+      refs.modeSelect,
+      state.matrixMode ? "matrix" : state.lightMode ? "light" : "dark",
+    );
   }
 
   function bindCollapse() {
     function setCollapsed(collapsed) {
+      if (!refs.controls) {
+        return;
+      }
       refs.controls.classList.toggle("collapsed", collapsed);
     }
 
-    refs.collapseBtn.addEventListener("click", () => {
-      setCollapsed(true);
-    });
+    if (refs.collapseBtn) {
+      refs.collapseBtn.addEventListener("click", () => {
+        setCollapsed(true);
+      });
+    }
 
-    refs.panelTab.addEventListener("click", () => {
-      setCollapsed(false);
-    });
+    if (refs.panelTab) {
+      refs.panelTab.addEventListener("click", () => {
+        setCollapsed(false);
+      });
+    }
   }
 
   return {

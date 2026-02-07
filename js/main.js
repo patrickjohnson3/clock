@@ -56,6 +56,7 @@ function renderVisuals(nextState) {
   document.body.classList.toggle("glow-on", nextState.glow);
   document.body.classList.toggle("neon-on", nextState.neon);
   document.body.style.fontFamily = nextState.font;
+  matrix.refreshStyles();
 
   if (nextState.matrix) {
     matrix.start();

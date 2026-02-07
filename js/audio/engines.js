@@ -83,6 +83,7 @@ export function createBrownNoiseEngine(config) {
 export function createPinkNoiseEngine(config) {
   let audioContext = null;
   let gainNode = null;
+  let highShelfNode = null;
   let sourceNode = null;
   let volume = 1;
 
@@ -142,16 +143,16 @@ export function createPinkNoiseEngine(config) {
       context.resume().catch(() => {});
     }
 
-    const highShelf = context.createBiquadFilter();
-    highShelf.type = "highshelf";
-    highShelf.frequency.value = config.shelfFrequency;
-    highShelf.gain.value = config.shelfGain;
+    highShelfNode = context.createBiquadFilter();
+    highShelfNode.type = "highshelf";
+    highShelfNode.frequency.value = config.shelfFrequency;
+    highShelfNode.gain.value = config.shelfGain;
 
     sourceNode = context.createBufferSource();
     sourceNode.buffer = createBuffer(context);
     sourceNode.loop = true;
-    sourceNode.connect(highShelf);
-    highShelf.connect(gainNode);
+    sourceNode.connect(highShelfNode);
+    highShelfNode.connect(gainNode);
     sourceNode.start();
     sourceNode.addEventListener("ended", () => {
       sourceNode = null;
@@ -159,12 +160,15 @@ export function createPinkNoiseEngine(config) {
   }
 
   function stop() {
-    if (!sourceNode) {
-      return;
+    if (sourceNode) {
+      sourceNode.stop();
+      sourceNode.disconnect();
+      sourceNode = null;
     }
-    sourceNode.stop();
-    sourceNode.disconnect();
-    sourceNode = null;
+    if (highShelfNode) {
+      highShelfNode.disconnect();
+      highShelfNode = null;
+    }
   }
 
   function setVolume(nextVolume) {
@@ -182,6 +186,8 @@ export function createRainStormEngine(config) {
   let masterGain = null;
   let bodyGain = null;
   let textureGain = null;
+  let bodyFilterNode = null;
+  let roofFilterNode = null;
   let bodySource = null;
   let textureSource = null;
   let variationTimerId = null;
@@ -309,27 +315,27 @@ export function createRainStormEngine(config) {
       context.resume().catch(() => {});
     }
 
-    const bodyFilter = context.createBiquadFilter();
-    bodyFilter.type = "lowpass";
-    bodyFilter.frequency.value = config.bodyLowpassFrequency;
-    bodyFilter.Q.value = config.bodyLowpassQ;
+    bodyFilterNode = context.createBiquadFilter();
+    bodyFilterNode.type = "lowpass";
+    bodyFilterNode.frequency.value = config.bodyLowpassFrequency;
+    bodyFilterNode.Q.value = config.bodyLowpassQ;
 
-    const roofFilter = context.createBiquadFilter();
-    roofFilter.type = "bandpass";
-    roofFilter.frequency.value = config.roofBandpassFrequency;
-    roofFilter.Q.value = config.roofBandpassQ;
+    roofFilterNode = context.createBiquadFilter();
+    roofFilterNode.type = "bandpass";
+    roofFilterNode.frequency.value = config.roofBandpassFrequency;
+    roofFilterNode.Q.value = config.roofBandpassQ;
 
     bodySource = context.createBufferSource();
     bodySource.buffer = createPinkishBuffer(context, 5);
     bodySource.loop = true;
-    bodySource.connect(bodyFilter);
-    bodyFilter.connect(bodyGain);
+    bodySource.connect(bodyFilterNode);
+    bodyFilterNode.connect(bodyGain);
 
     textureSource = context.createBufferSource();
     textureSource.buffer = createTextureBuffer(context, 4);
     textureSource.loop = true;
-    textureSource.connect(roofFilter);
-    roofFilter.connect(textureGain);
+    textureSource.connect(roofFilterNode);
+    roofFilterNode.connect(textureGain);
 
     bodySource.start();
     textureSource.start();
@@ -357,6 +363,15 @@ export function createRainStormEngine(config) {
       textureSource.disconnect();
       textureSource = null;
     }
+
+    if (bodyFilterNode) {
+      bodyFilterNode.disconnect();
+      bodyFilterNode = null;
+    }
+    if (roofFilterNode) {
+      roofFilterNode.disconnect();
+      roofFilterNode = null;
+    }
   }
 
   function setVolume(nextVolume) {
@@ -375,6 +390,9 @@ export function createAircraftCabinEngine(config) {
   let bodyGain = null;
   let hissGain = null;
   let rumbleGain = null;
+  let bodyFilterNode = null;
+  let hissFilterNode = null;
+  let rumbleFilterNode = null;
   let bodySource = null;
   let hissSource = null;
   let rumbleSource = null;
@@ -491,38 +509,38 @@ export function createAircraftCabinEngine(config) {
       context.resume().catch(() => {});
     }
 
-    const bodyFilter = context.createBiquadFilter();
-    bodyFilter.type = "lowpass";
-    bodyFilter.frequency.value = config.bodyLowpassFrequency;
-    bodyFilter.Q.value = config.bodyLowpassQ;
+    bodyFilterNode = context.createBiquadFilter();
+    bodyFilterNode.type = "lowpass";
+    bodyFilterNode.frequency.value = config.bodyLowpassFrequency;
+    bodyFilterNode.Q.value = config.bodyLowpassQ;
 
-    const hissFilter = context.createBiquadFilter();
-    hissFilter.type = "bandpass";
-    hissFilter.frequency.value = config.hissBandpassFrequency;
-    hissFilter.Q.value = config.hissBandpassQ;
+    hissFilterNode = context.createBiquadFilter();
+    hissFilterNode.type = "bandpass";
+    hissFilterNode.frequency.value = config.hissBandpassFrequency;
+    hissFilterNode.Q.value = config.hissBandpassQ;
 
-    const rumbleFilter = context.createBiquadFilter();
-    rumbleFilter.type = "bandpass";
-    rumbleFilter.frequency.value = config.rumbleBandpassFrequency;
-    rumbleFilter.Q.value = config.rumbleBandpassQ;
+    rumbleFilterNode = context.createBiquadFilter();
+    rumbleFilterNode.type = "bandpass";
+    rumbleFilterNode.frequency.value = config.rumbleBandpassFrequency;
+    rumbleFilterNode.Q.value = config.rumbleBandpassQ;
 
     bodySource = context.createBufferSource();
     bodySource.buffer = createBrownishBuffer(context, 6);
     bodySource.loop = true;
-    bodySource.connect(bodyFilter);
-    bodyFilter.connect(bodyGain);
+    bodySource.connect(bodyFilterNode);
+    bodyFilterNode.connect(bodyGain);
 
     hissSource = context.createBufferSource();
     hissSource.buffer = createHissBuffer(context, 5);
     hissSource.loop = true;
-    hissSource.connect(hissFilter);
-    hissFilter.connect(hissGain);
+    hissSource.connect(hissFilterNode);
+    hissFilterNode.connect(hissGain);
 
     rumbleSource = context.createBufferSource();
     rumbleSource.buffer = createBrownishBuffer(context, 4);
     rumbleSource.loop = true;
-    rumbleSource.connect(rumbleFilter);
-    rumbleFilter.connect(rumbleGain);
+    rumbleSource.connect(rumbleFilterNode);
+    rumbleFilterNode.connect(rumbleGain);
 
     bodySource.start();
     hissSource.start();
@@ -557,6 +575,19 @@ export function createAircraftCabinEngine(config) {
       rumbleSource.stop();
       rumbleSource.disconnect();
       rumbleSource = null;
+    }
+
+    if (bodyFilterNode) {
+      bodyFilterNode.disconnect();
+      bodyFilterNode = null;
+    }
+    if (hissFilterNode) {
+      hissFilterNode.disconnect();
+      hissFilterNode = null;
+    }
+    if (rumbleFilterNode) {
+      rumbleFilterNode.disconnect();
+      rumbleFilterNode = null;
     }
   }
 

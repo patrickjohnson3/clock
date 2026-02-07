@@ -1,19 +1,29 @@
 export function createClock({ container, chars, tuning }) {
   const spans = [];
+  const formatterByHourMode = new Map();
 
-  function formatTime(now, state) {
-    const format = new Intl.DateTimeFormat("en-GB", {
+  function getFormatter(hour24) {
+    const key = hour24 ? "24" : "12";
+    if (formatterByHourMode.has(key)) {
+      return formatterByHourMode.get(key);
+    }
+    const formatter = new Intl.DateTimeFormat("en-GB", {
       hour: "numeric",
       minute: "2-digit",
       second: "2-digit",
-      hour12: !state.hour24,
+      hour12: !hour24,
     });
+    formatterByHourMode.set(key, formatter);
+    return formatter;
+  }
 
+  function formatTime(now, state) {
+    const formatter = getFormatter(state.hour24);
     if (state.showAmPm) {
-      return format.format(now);
+      return formatter.format(now);
     }
 
-    const parts = format.formatToParts(now);
+    const parts = formatter.formatToParts(now);
     return parts
       .filter((part) => part.type !== "dayPeriod")
       .map((part) => part.value)

@@ -4,6 +4,16 @@ export function createMatrix({ canvas, chars, tuning }) {
   let columns = 0;
   let drops = [];
   let timerId = null;
+  let matrixTrail = "rgba(0, 0, 0, 0.05)";
+  let fg = "#fff";
+
+  function refreshStyles() {
+    const bodyStyle = getComputedStyle(document.body);
+    matrixTrail =
+      bodyStyle.getPropertyValue("--matrix-trail").trim() ||
+      "rgba(0, 0, 0, 0.05)";
+    fg = bodyStyle.getPropertyValue("--fg").trim() || "#fff";
+  }
 
   function rebuildDrops() {
     const previous = drops;
@@ -15,6 +25,7 @@ export function createMatrix({ canvas, chars, tuning }) {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     rebuildDrops();
+    refreshStyles();
   }
 
   function clear() {
@@ -22,16 +33,9 @@ export function createMatrix({ canvas, chars, tuning }) {
   }
 
   function draw() {
-    const matrixTrail =
-      getComputedStyle(document.body)
-        .getPropertyValue("--matrix-trail")
-        .trim() || "rgba(0, 0, 0, 0.05)";
-
     ctx.fillStyle = matrixTrail;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const fg =
-      getComputedStyle(document.body).getPropertyValue("--fg").trim() || "#fff";
     ctx.font = `${tuning.fontSize}px monospace`;
 
     for (let i = 0; i < drops.length; i += 1) {
@@ -57,6 +61,7 @@ export function createMatrix({ canvas, chars, tuning }) {
     if (timerId !== null) {
       return;
     }
+    refreshStyles();
     timerId = window.setInterval(draw, tuning.intervalMs);
   }
 
@@ -73,5 +78,6 @@ export function createMatrix({ canvas, chars, tuning }) {
     clear,
     start,
     stop,
+    refreshStyles,
   };
 }
