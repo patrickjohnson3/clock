@@ -29,6 +29,7 @@
       clock: document.getElementById('clock'),
       controls: document.getElementById('controls'),
       collapseBtn: document.getElementById('collapseBtn'),
+      panelTab: document.getElementById('panelTab'),
       toggles: {
         glitch: document.getElementById('glitchToggle'),
         glyph: document.getElementById('glyphToggle'),
@@ -90,8 +91,16 @@
     }
 
     function bindCollapse() {
+      function setCollapsed(collapsed) {
+        refs.controls.classList.toggle('collapsed', collapsed);
+      }
+
       refs.collapseBtn.addEventListener('click', () => {
-        refs.controls.classList.toggle('collapsed');
+        setCollapsed(true);
+      });
+
+      refs.panelTab.addEventListener('click', () => {
+        setCollapsed(false);
       });
     }
 
