@@ -133,6 +133,7 @@ body.glow-on #clock::before {
 #controls {
   position: fixed;
   top: 1rem;
+  top: calc(env(safe-area-inset-top, 0px) + 1rem);
   left: 50%;
   z-index: 2;
   background: var(--panel-bg);
@@ -206,6 +207,7 @@ strong {
 #panelTab {
   position: fixed;
   top: 0;
+  top: env(safe-area-inset-top, 0px);
   left: 50%;
   z-index: 3;
   background: var(--panel-bg);
@@ -213,10 +215,10 @@ strong {
   border: 1px solid var(--panel-border);
   border-top: 0;
   border-radius: 0 0 8px 8px;
-  width: 120px;
-  height: 20px;
+  width: 136px;
+  height: 26px;
   padding: 0;
-  font-size: 0.73rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -224,6 +226,7 @@ strong {
   opacity: 0;
   pointer-events: none;
   overflow: hidden;
+  line-height: 1;
   transform: translateX(-50%) translateY(-120%);
   transition:
     opacity 0.2s ease,
@@ -234,8 +237,8 @@ strong {
 #panelTab::after {
   content: "";
   position: absolute;
-  left: 18px;
-  right: 18px;
+  left: 16px;
+  right: 16px;
   top: 4px;
   height: 2px;
   border-radius: 999px;
@@ -252,7 +255,7 @@ strong {
 #controls.collapsed + #panelTab:hover,
 #controls.collapsed + #panelTab:focus-visible {
   opacity: 1;
-  height: 24px;
+  height: 30px;
 }
 
 #panelTab:focus-visible {
@@ -269,9 +272,19 @@ strong {
   accent-color: var(--fg);
 }
 
+#controls input[type="checkbox"]:focus-visible {
+  outline: 1px solid var(--panel-border);
+  outline-offset: 2px;
+}
+
 #controls input[type="range"] {
   width: 100%;
   accent-color: var(--fg);
+}
+
+#controls input[type="range"]:focus-visible {
+  outline: 1px solid var(--panel-border);
+  outline-offset: 2px;
 }
 
 #controls select {
@@ -283,6 +296,11 @@ strong {
   background: rgba(var(--fg-rgb), 0.08);
   color: var(--panel-fg);
   font: inherit;
+}
+
+#controls select:focus-visible {
+  outline: 1px solid var(--panel-border);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
