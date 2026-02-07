@@ -15,70 +15,82 @@
     <div id="clock"></div>
 
     <div id="controls">
-      <strong>General</strong>
-      <label
-        ><input type="checkbox" id="storageToggle" checked /> Persistent
-        Storage</label
-      >
-      <label>
-        Display Mode
-        <select id="modeSelect">
-          <option value="dark">Dark Mode</option>
-          <option value="light">Light Mode</option>
-          <option value="matrix">Matrix Mode (Green)</option>
-        </select>
-      </label>
-      <label>
-        Font
-        <select id="fontSelect">
-          <option
-            value="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace"
-          >
-            System
-          </option>
-          <option value="'Space Mono', monospace">Space Mono</option>
-          <option value="'IBM Plex Mono', monospace">IBM Plex Mono</option>
-          <option value="'Roboto Mono', monospace">Roboto Mono</option>
-          <option value="'Source Code Pro', monospace">Source Code Pro</option>
-          <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
-          <option value="'Fira Mono', monospace">Fira Mono</option>
-        </select>
-      </label>
-      <strong>Clock</strong>
-      <label><input type="checkbox" id="hour24Toggle" /> 24-Hour Mode</label>
-      <label><input type="checkbox" id="showAmPmToggle" /> Show AM/PM</label>
-      <strong>Matrix</strong>
-      <label><input type="checkbox" id="glitchToggle" /> Glitch FX</label>
-      <label
-        ><input type="checkbox" id="glyphToggle" /> Matrix Glyph Filter</label
-      >
-      <label><input type="checkbox" id="matrixToggle" /> Matrix Rain</label>
-      <label><input type="checkbox" id="glowToggle" /> Clock Glow</label>
-      <label><input type="checkbox" id="neonToggle" /> Neon FX</label>
-      <strong>Sound</strong>
-      <label><input type="checkbox" id="brownNoiseToggle" /> Brown Noise</label>
-      <label><input type="checkbox" id="rainStormToggle" /> Rain Storm</label>
-      <label
-        ><input type="checkbox" id="aircraftCabinToggle" /> Aircraft
-        Cabin</label
-      >
-      <label><input type="checkbox" id="pinkNoiseToggle" /> Pink Noise</label>
-      <label><input type="checkbox" id="dubTechnoToggle" /> Dub Techno</label>
-      <label>
-        Sound Volume
-        <input
-          type="range"
-          id="soundVolumeSlider"
-          min="0"
-          max="100"
-          step="1"
-          value="100"
-        />
-      </label>
       <button id="collapseBtn">Hide Panel</button>
+      <div class="controls-columns">
+        <section class="controls-section">
+          <strong>General</strong>
+          <label
+            ><input type="checkbox" id="storageToggle" checked /> Persistent
+            Storage</label
+          >
+          <label>
+            Display Mode
+            <select id="modeSelect">
+              <option value="dark">Dark Mode</option>
+              <option value="light">Light Mode</option>
+              <option value="matrix">Matrix Mode (Green)</option>
+            </select>
+          </label>
+          <label>
+            Font
+            <select id="fontSelect">
+              <option
+                value="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace"
+              >
+                System
+              </option>
+              <option value="'Space Mono', monospace">Space Mono</option>
+              <option value="'IBM Plex Mono', monospace">IBM Plex Mono</option>
+              <option value="'Roboto Mono', monospace">Roboto Mono</option>
+              <option value="'Source Code Pro', monospace">Source Code Pro</option>
+              <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+              <option value="'Fira Mono', monospace">Fira Mono</option>
+            </select>
+          </label>
+          <strong>Clock</strong>
+          <label><input type="checkbox" id="hour24Toggle" /> 24-Hour Mode</label>
+          <label><input type="checkbox" id="showAmPmToggle" /> Show AM/PM</label>
+        </section>
+
+        <section class="controls-section">
+          <strong>Matrix</strong>
+          <label><input type="checkbox" id="glitchToggle" /> Glitch FX</label>
+          <label
+            ><input type="checkbox" id="glyphToggle" /> Matrix Glyph Filter</label
+          >
+          <label><input type="checkbox" id="matrixToggle" /> Matrix Rain</label>
+          <label><input type="checkbox" id="glowToggle" /> Clock Glow</label>
+          <label><input type="checkbox" id="neonToggle" /> Neon FX</label>
+        </section>
+
+        <section class="controls-section">
+          <strong>Sound</strong>
+          <label
+            ><input type="checkbox" id="brownNoiseToggle" /> Brown Noise</label
+          >
+          <label><input type="checkbox" id="rainStormToggle" /> Rain Storm</label>
+          <label
+            ><input type="checkbox" id="aircraftCabinToggle" /> Aircraft
+            Cabin</label
+          >
+          <label><input type="checkbox" id="pinkNoiseToggle" /> Pink Noise</label>
+          <label><input type="checkbox" id="dubTechnoToggle" /> Dub Techno</label>
+          <label>
+            Sound Volume
+            <input
+              type="range"
+              id="soundVolumeSlider"
+              min="0"
+              max="100"
+              step="1"
+              value="100"
+            />
+          </label>
+        </section>
+      </div>
     </div>
     <button id="panelTab" aria-label="Show panel">Show Panel</button>
 
-  <script type="module" src="app.js"></script>
-</body>
+    <script type="module" src="app.js"></script>
+  </body>
 </html>

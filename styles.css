@@ -133,26 +133,49 @@ body.glow-on #clock::before {
 #controls {
   position: fixed;
   top: 1rem;
-  left: 1rem;
+  left: 50%;
   z-index: 2;
   background: var(--panel-bg);
   color: var(--panel-fg);
-  padding: 1rem;
+  width: min(92vw, 760px);
+  padding: 1rem 1.15rem;
   font-size: 0.9rem;
   font-family: monospace;
   border: 1px solid var(--panel-border);
-  border-radius: 4px;
-  max-height: calc(100vh - 2rem);
+  border-radius: 8px;
+  max-height: calc(100vh - 2.5rem);
   overflow-y: auto;
+  transform: translateX(-50%);
   transition:
     opacity 0.25s ease,
     transform 0.25s ease;
 }
 
 #controls.collapsed {
-  transform: translateX(calc(-100% - 2rem));
+  transform: translateX(-50%) translateY(calc(-100% - 2rem));
   opacity: 0;
   pointer-events: none;
+}
+
+.controls-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem 1.2rem;
+}
+
+.controls-section {
+  min-width: 0;
+}
+
+.controls-section strong:first-child {
+  text-align: center;
+  font-size: 1.05rem;
+  letter-spacing: 0.03em;
+}
+
+.controls-section + .controls-section {
+  border-left: 1px solid rgba(var(--fg-rgb), 0.18);
+  padding-left: 1rem;
 }
 
 label {
@@ -166,7 +189,8 @@ strong {
 }
 
 #collapseBtn {
-  margin-top: 0.5rem;
+  display: block;
+  margin: 0 auto 0.8rem;
   background: transparent;
   border: 1px solid var(--panel-border);
   color: var(--panel-fg);
@@ -177,36 +201,36 @@ strong {
 
 #panelTab {
   position: fixed;
-  top: 50%;
-  left: 0;
+  top: 0;
+  left: 50%;
   z-index: 3;
   background: var(--panel-bg);
   color: transparent;
   border: 1px solid var(--panel-border);
-  border-left: 0;
-  border-radius: 0 8px 8px 0;
-  width: 10px;
-  height: 56px;
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+  width: 56px;
+  height: 10px;
   padding: 0;
   font-size: 0;
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
   overflow: hidden;
-  transform: translateX(-120%) translateY(-50%);
+  transform: translateX(-50%) translateY(-120%);
   transition:
     opacity 0.2s ease,
     transform 0.2s ease,
-    width 0.2s ease;
+    height 0.2s ease;
 }
 
 #panelTab::after {
   content: "";
   position: absolute;
-  top: 10px;
-  right: 3px;
-  bottom: 10px;
-  width: 3px;
+  left: 10px;
+  right: 10px;
+  top: 3px;
+  height: 3px;
   border-radius: 999px;
   background: var(--panel-border);
   opacity: 0.75;
@@ -215,16 +239,33 @@ strong {
 #controls.collapsed + #panelTab {
   opacity: 0.24;
   pointer-events: auto;
-  transform: translateX(0) translateY(-50%);
+  transform: translateX(-50%) translateY(0);
 }
 
 #controls.collapsed + #panelTab:hover,
 #controls.collapsed + #panelTab:focus-visible {
   opacity: 1;
-  width: 14px;
+  height: 14px;
 }
 
 #panelTab:focus-visible {
   outline: 1px solid var(--panel-border);
   outline-offset: 2px;
+}
+
+@media (max-width: 920px) {
+  .controls-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .controls-section + .controls-section {
+    border-left: 0;
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .controls-columns {
+    grid-template-columns: 1fr;
+  }
 }
