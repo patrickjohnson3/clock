@@ -4,6 +4,8 @@ This is a vibe coding project.
 
 A full-screen Matrix-inspired clock with a top drop-down control panel, visual effects, and ambient sound modes.
 
+Live demo: [patrickjohnson3.github.io/clock](https://patrickjohnson3.github.io/clock/)
+
 ## Features
 
 - Centered digital clock with optional AM/PM display
