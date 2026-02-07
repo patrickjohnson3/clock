@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matrix Clock: Refined Core</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&family=IBM+Plex+Mono:wght@700&family=Roboto+Mono:wght@700&family=Source+Code+Pro:wght@700&family=JetBrains+Mono:wght@700&family=Fira+Mono:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="matrix"></canvas>
+  <div id="clock"></div>
+
+  <div id="controls">
+    <strong>General</strong>
+    <label><input type="checkbox" id="storageToggle" checked> Persistant Storage</label>
+    <label>
+      Display Mode
+      <select id="modeSelect">
+        <option value="dark">Dark Mode</option>
+        <option value="light">Light Mode</option>
+        <option value="matrix">Matrix Mode (Green)</option>
+      </select>
+    </label>
+    <label>
+      Font
+      <select id="fontSelect">
+        <option value="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace">System</option>
+        <option value="'Space Mono', monospace">Space Mono</option>
+        <option value="'IBM Plex Mono', monospace">IBM Plex Mono</option>
+        <option value="'Roboto Mono', monospace">Roboto Mono</option>
+        <option value="'Source Code Pro', monospace">Source Code Pro</option>
+        <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+        <option value="'Fira Mono', monospace">Fira Mono</option>
+      </select>
+    </label>
+    <strong>Clock</strong>
+    <label><input type="checkbox" id="hour24Toggle"> 24-Hour Mode</label>
+    <label><input type="checkbox" id="showAmPmToggle"> Show AM/PM</label>
+    <strong>Matrix</strong>
+    <label><input type="checkbox" id="glitchToggle"> Glitch FX</label>
+    <label><input type="checkbox" id="glyphToggle"> Matrix Glyph Filter</label>
+    <label><input type="checkbox" id="matrixToggle"> Matrix Rain</label>
+    <label><input type="checkbox" id="glowToggle"> Clock Glow</label>
+    <label><input type="checkbox" id="neonToggle"> Neon FX</label>
+    <strong>Sound</strong>
+    <label><input type="checkbox" id="brownNoiseToggle"> Brown Noise</label>
+    <label><input type="checkbox" id="rainStormToggle"> Rain Storm</label>
+    <label><input type="checkbox" id="aircraftCabinToggle"> Aircraft Cabin</label>
+    <label><input type="checkbox" id="pinkNoiseToggle"> Pink Noise</label>
+    <label>
+      Sound Volume
+      <input type="range" id="soundVolumeSlider" min="0" max="100" step="1" value="100">
+    </label>
+    <button id="collapseBtn">Hide Panel</button>
+  </div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
