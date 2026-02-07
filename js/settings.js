@@ -82,7 +82,8 @@ export function createSettings({
         return;
       }
 
-      const { persistStorage, ...persistedState } = state;
+      const persistedState = { ...state };
+      delete persistedState.persistStorage;
       localStorage.setItem(storageKey, JSON.stringify(persistedState));
     } catch {
       // Ignore storage failures.
