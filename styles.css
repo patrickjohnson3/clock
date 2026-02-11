@@ -5,6 +5,7 @@
   --panel-bg: rgba(0, 0, 0, 0.88);
   --panel-fg: #fff;
   --panel-border: rgba(255, 255, 255, 0.92);
+  --control-accent: #8ea3b7;
   --matrix-trail: rgba(0, 0, 0, 0.05);
 }
 
@@ -15,6 +16,7 @@ body.light-mode {
   --panel-bg: rgba(255, 255, 255, 0.93);
   --panel-fg: #000;
   --panel-border: rgba(0, 0, 0, 0.82);
+  --control-accent: #1e1e1e;
   --matrix-trail: rgba(255, 255, 255, 0.08);
 }
 
@@ -25,6 +27,7 @@ body.matrix-mode {
   --panel-bg: rgba(0, 0, 0, 0.88);
   --panel-fg: #00ff00;
   --panel-border: rgba(0, 255, 0, 0.9);
+  --control-accent: #00c96b;
   --matrix-trail: rgba(0, 0, 0, 0.05);
 }
 
@@ -272,7 +275,7 @@ strong {
 }
 
 #controls input[type="checkbox"] {
-  accent-color: var(--fg);
+  accent-color: var(--control-accent);
 }
 
 #controls input[type="checkbox"]:focus-visible {
@@ -282,7 +285,7 @@ strong {
 
 #controls input[type="range"] {
   width: 100%;
-  accent-color: var(--fg);
+  accent-color: var(--control-accent);
 }
 
 #controls input[type="range"]:focus-visible {
