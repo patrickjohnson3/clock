@@ -351,7 +351,65 @@ body.light-mode #controls option:hover {
 }
 
 @media (max-width: 640px) {
+  #controls {
+    left: 0.5rem;
+    right: 0.5rem;
+    top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
+    width: auto;
+    max-height: min(68vh, 540px);
+    padding: 0.8rem 0.85rem;
+    border-radius: 12px;
+    transform: none;
+    font-size: 0.94rem;
+  }
+
+  #controls.collapsed {
+    transform: translateY(calc(-100% - 1rem));
+  }
+
+  #collapseBtn {
+    width: 100%;
+    min-height: 2rem;
+    margin: 0 0 0.7rem;
+  }
+
   .controls-columns {
     grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .controls-section + .controls-section {
+    border-top: 1px solid rgba(var(--fg-rgb), 0.16);
+    padding-top: 0.75rem;
+    margin-top: 0.1rem;
+  }
+
+  .controls-section strong:first-child {
+    text-align: left;
+  }
+
+  label {
+    margin-bottom: 0.55rem;
+  }
+
+  #panelTab {
+    width: 64px;
+    height: 14px;
+    border-radius: 0 0 10px 10px;
+  }
+
+  #panelTab::after {
+    left: 14px;
+    right: 14px;
+  }
+
+  #controls.collapsed + #panelTab {
+    opacity: 0.56;
+  }
+
+  #controls.collapsed + #panelTab:hover,
+  #controls.collapsed + #panelTab:focus-visible {
+    opacity: 0.82;
+    height: 20px;
   }
 }
