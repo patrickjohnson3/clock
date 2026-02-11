@@ -74,6 +74,7 @@ let state = settings.load();
 let saveTimerId = null;
 let clockTimerId = null;
 ui.setControlsFromState(state);
+ui.updateScrollHint();
 
 function renderVisuals(nextState) {
   document.body.classList.toggle("light-mode", nextState.lightMode);
@@ -160,6 +161,7 @@ function updateState(partial) {
   state = normalizeState({ ...state, ...partial });
   render();
   ui.setControlsFromState(state);
+  ui.updateScrollHint();
   scheduleSave();
 }
 
@@ -219,6 +221,7 @@ ui.bindToggle(ui.refs.toggles.persistStorage, (checked) =>
 );
 ui.bindSelect(ui.refs.fontSelect, (font) => updateState({ font }));
 ui.bindCollapse();
+ui.bindScrollHint();
 
 matrix.resize();
 window.addEventListener("resize", () => {

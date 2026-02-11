@@ -101,6 +101,7 @@ export function createUI(defaults) {
         return;
       }
       refs.controls.classList.toggle("collapsed", collapsed);
+      window.requestAnimationFrame(updateScrollHint);
     }
 
     if (refs.collapseBtn) {
@@ -116,6 +117,32 @@ export function createUI(defaults) {
     }
   }
 
+  function updateScrollHint() {
+    const controlsEl = refs.controls;
+    if (!controlsEl || controlsEl.classList.contains("collapsed")) {
+      return;
+    }
+
+    const hasOverflow = controlsEl.scrollHeight - controlsEl.clientHeight > 2;
+    const atBottom =
+      controlsEl.scrollTop + controlsEl.clientHeight >=
+      controlsEl.scrollHeight - 2;
+
+    controlsEl.classList.toggle("show-scroll-hint", hasOverflow && !atBottom);
+  }
+
+  function bindScrollHint() {
+    if (!refs.controls) {
+      return;
+    }
+
+    refs.controls.addEventListener("scroll", updateScrollHint, {
+      passive: true,
+    });
+    window.addEventListener("resize", updateScrollHint);
+    window.requestAnimationFrame(updateScrollHint);
+  }
+
   return {
     refs,
     bindToggle,
@@ -123,5 +150,7 @@ export function createUI(defaults) {
     bindRange,
     setControlsFromState,
     bindCollapse,
+    bindScrollHint,
+    updateScrollHint,
   };
 }
