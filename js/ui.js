@@ -18,6 +18,7 @@ export function createUI(defaults) {
       rainStorm: document.getElementById("rainStormToggle"),
       aircraftCabin: document.getElementById("aircraftCabinToggle"),
       dubTechno: document.getElementById("dubTechnoToggle"),
+      fullscreen: document.getElementById("fullscreenToggle"),
       persistStorage: document.getElementById("storageToggle"),
     },
     fontSelect: document.getElementById("fontSelect"),
@@ -77,6 +78,7 @@ export function createUI(defaults) {
     setChecked(refs.toggles.rainStorm, state.rainStorm);
     setChecked(refs.toggles.aircraftCabin, state.aircraftCabin);
     setChecked(refs.toggles.dubTechno, state.dubTechno);
+    setChecked(refs.toggles.fullscreen, state.fullscreen);
     setChecked(refs.toggles.persistStorage, state.persistStorage);
     setValue(refs.soundVolumeSlider, String(state.soundVolume));
 

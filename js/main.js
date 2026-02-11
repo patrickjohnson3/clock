@@ -104,6 +104,34 @@ function renderClock(nextState) {
   clock.render(nextState);
 }
 
+async function setFullscreen(enabled) {
+  if (enabled) {
+    if (document.fullscreenElement) {
+      return true;
+    }
+    const root = document.documentElement;
+    if (!root.requestFullscreen) {
+      return false;
+    }
+    try {
+      await root.requestFullscreen();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  if (!document.fullscreenElement || !document.exitFullscreen) {
+    return true;
+  }
+  try {
+    await document.exitFullscreen();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function render() {
   renderVisuals(state);
   renderAudio(state);
@@ -171,6 +199,12 @@ ui.bindToggle(ui.refs.toggles.aircraftCabin, (checked) =>
 ui.bindToggle(ui.refs.toggles.dubTechno, (checked) =>
   updateState({ dubTechno: checked }),
 );
+ui.bindToggle(ui.refs.toggles.fullscreen, async (checked) => {
+  const success = await setFullscreen(checked);
+  if (!success) {
+    updateState({ fullscreen: Boolean(document.fullscreenElement) });
+  }
+});
 ui.bindRange(ui.refs.soundVolumeSlider, (value) =>
   updateState({ soundVolume: Number(value) }),
 );
@@ -223,6 +257,13 @@ window.addEventListener("visibilitychange", () => {
   startClockTicker();
   if (state.matrix) {
     matrix.start();
+  }
+});
+
+window.addEventListener("fullscreenchange", () => {
+  const isFullscreen = Boolean(document.fullscreenElement);
+  if (state.fullscreen !== isFullscreen) {
+    updateState({ fullscreen: isFullscreen });
   }
 });
 

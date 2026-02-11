@@ -24,6 +24,7 @@ export const DEFAULTS = {
   lightMode: false,
   matrixMode: false,
   font: SYSTEM_FONT,
+  fullscreen: false,
   persistStorage: true,
 };
 

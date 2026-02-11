@@ -81,6 +81,7 @@ export function createSettings({
           ? saved.matrixMode
           : defaults.matrixMode,
       font: typeof saved.font === "string" ? saved.font : defaults.font,
+      fullscreen: false,
       persistStorage,
     });
   }
@@ -99,6 +100,7 @@ export function createSettings({
 
       const persistedState = { ...state };
       delete persistedState.persistStorage;
+      delete persistedState.fullscreen;
       localStorage.setItem(storageKey, JSON.stringify(persistedState));
     } catch {
       // Ignore storage failures.
