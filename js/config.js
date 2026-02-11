@@ -25,7 +25,7 @@ export const DEFAULTS = {
   matrixMode: false,
   font: SYSTEM_FONT,
   fullscreen: false,
-  persistStorage: true,
+  persistStorage: false,
 };
 
 export const TUNING = {
