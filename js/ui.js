@@ -119,7 +119,12 @@ export function createUI(defaults) {
 
   function updateScrollHint() {
     const controlsEl = refs.controls;
-    if (!controlsEl || controlsEl.classList.contains("collapsed")) {
+    if (!controlsEl) {
+      return;
+    }
+
+    if (controlsEl.classList.contains("collapsed")) {
+      controlsEl.classList.remove("show-scroll-hint");
       return;
     }
 
