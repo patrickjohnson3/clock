@@ -153,10 +153,32 @@ body.glow-on #clock::before {
   backdrop-filter: blur(6px) saturate(0.9);
   max-height: calc(100vh - 2.5rem);
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--fg-rgb), 0.5) rgba(var(--fg-rgb), 0.14);
   transform: translateX(-50%);
   transition:
     opacity 0.25s ease,
     transform 0.25s ease;
+}
+
+#controls::-webkit-scrollbar {
+  width: 9px;
+}
+
+#controls::-webkit-scrollbar-track {
+  background: rgba(var(--fg-rgb), 0.14);
+  border-radius: 999px;
+}
+
+#controls::-webkit-scrollbar-thumb {
+  background: rgba(var(--fg-rgb), 0.52);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+#controls::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--fg-rgb), 0.72);
 }
 
 #controls.collapsed {
