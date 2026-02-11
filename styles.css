@@ -284,6 +284,16 @@ strong {
     height 0.2s ease;
 }
 
+:fullscreen #panelTab,
+:-webkit-full-screen #panelTab {
+  top: 0;
+}
+
+:fullscreen #controls,
+:-webkit-full-screen #controls {
+  top: 0.5rem;
+}
+
 #panelTab::after {
   content: "";
   position: absolute;
@@ -462,5 +472,15 @@ body.light-mode #controls option:hover {
   #controls.collapsed + #panelTab:focus-visible {
     opacity: 0.82;
     height: 20px;
+  }
+
+  :fullscreen #panelTab,
+  :-webkit-full-screen #panelTab {
+    top: 0;
+  }
+
+  :fullscreen #controls,
+  :-webkit-full-screen #controls {
+    top: 0.5rem;
   }
 }
