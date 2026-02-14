@@ -22,8 +22,16 @@ export function createUI(defaults) {
       persistStorage: document.getElementById("storageToggle"),
     },
     fontSelect: document.getElementById("fontSelect"),
+    timerModeSelect: document.getElementById("timerModeSelect"),
     modeSelect: document.getElementById("modeSelect"),
     soundVolumeSlider: document.getElementById("soundVolumeSlider"),
+    pomodoroWorkInput: document.getElementById("pomodoroWorkInput"),
+    pomodoroShortBreakInput: document.getElementById("pomodoroShortBreakInput"),
+    pomodoroLongBreakInput: document.getElementById("pomodoroLongBreakInput"),
+    pomodoroCyclesInput: document.getElementById("pomodoroCyclesInput"),
+    pomodoroStartPauseBtn: document.getElementById("pomodoroStartPauseBtn"),
+    pomodoroResetBtn: document.getElementById("pomodoroResetBtn"),
+    pomodoroSkipBtn: document.getElementById("pomodoroSkipBtn"),
   };
 
   function setChecked(el, value) {
@@ -65,6 +73,25 @@ export function createUI(defaults) {
     });
   }
 
+  function bindNumber(inputEl, onChange) {
+    if (!inputEl) {
+      return;
+    }
+    inputEl.addEventListener("input", (event) => {
+      onChange(Number(event.target.value));
+    });
+    inputEl.addEventListener("change", (event) => {
+      onChange(Number(event.target.value));
+    });
+  }
+
+  function bindClick(buttonEl, onClick) {
+    if (!buttonEl) {
+      return;
+    }
+    buttonEl.addEventListener("click", onClick);
+  }
+
   function setControlsFromState(state) {
     setChecked(refs.toggles.glitch, state.glitch);
     setChecked(refs.toggles.glyph, state.glyph);
@@ -81,6 +108,22 @@ export function createUI(defaults) {
     setChecked(refs.toggles.fullscreen, state.fullscreen);
     setChecked(refs.toggles.persistStorage, state.persistStorage);
     setValue(refs.soundVolumeSlider, String(state.soundVolume));
+    setValue(refs.timerModeSelect, state.timerMode);
+    setValue(refs.pomodoroWorkInput, String(state.pomodoroWorkMinutes));
+    setValue(
+      refs.pomodoroShortBreakInput,
+      String(state.pomodoroShortBreakMinutes),
+    );
+    setValue(refs.pomodoroLongBreakInput, String(state.pomodoroLongBreakMinutes));
+    setValue(
+      refs.pomodoroCyclesInput,
+      String(state.pomodoroCyclesBeforeLongBreak),
+    );
+    if (refs.pomodoroStartPauseBtn) {
+      refs.pomodoroStartPauseBtn.textContent = state.pomodoroRunning
+        ? "Pause"
+        : "Start";
+    }
 
     if (refs.fontSelect) {
       refs.fontSelect.value = state.font;
@@ -153,6 +196,8 @@ export function createUI(defaults) {
     bindToggle,
     bindSelect,
     bindRange,
+    bindNumber,
+    bindClick,
     setControlsFromState,
     bindCollapse,
     bindScrollHint,

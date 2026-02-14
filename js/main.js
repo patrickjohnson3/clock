@@ -15,6 +15,7 @@ import {
 } from "./audio/engines.js";
 import { createSoundManager } from "./audio/manager.js";
 import { createMatrix } from "./matrix.js";
+import { createPomodoro } from "./pomodoro.js";
 import { createSettings } from "./settings.js";
 import { normalizeState } from "./state.js";
 import { createUI } from "./ui.js";
@@ -51,6 +52,7 @@ const clock = createClock({
   chars: CHARS,
   tuning: TUNING.clock,
 });
+const pomodoro = createPomodoro();
 
 const soundManager = createSoundManager({
   brownNoise: createBrownNoiseEngine(TUNING.audio.brownNoise, {
@@ -70,7 +72,11 @@ const soundManager = createSoundManager({
   }),
 });
 
-let state = settings.load();
+const loadedState = settings.load();
+let state = {
+  ...loadedState,
+  ...pomodoro.createInitialRuntimeState(loadedState),
+};
 let saveTimerId = null;
 let clockTimerId = null;
 ui.setControlsFromState(state);
@@ -81,6 +87,19 @@ function renderVisuals(nextState) {
   document.body.classList.toggle("matrix-mode", nextState.matrixMode);
   document.body.classList.toggle("glow-on", nextState.glow);
   document.body.classList.toggle("neon-on", nextState.neon);
+  document.body.classList.toggle("timer-pomodoro", nextState.timerMode === "pomodoro");
+  document.body.classList.toggle(
+    "pomodoro-work",
+    nextState.timerMode === "pomodoro" && nextState.pomodoroPhase === "work",
+  );
+  document.body.classList.toggle(
+    "pomodoro-short-break",
+    nextState.timerMode === "pomodoro" && nextState.pomodoroPhase === "shortBreak",
+  );
+  document.body.classList.toggle(
+    "pomodoro-long-break",
+    nextState.timerMode === "pomodoro" && nextState.pomodoroPhase === "longBreak",
+  );
   document.body.style.fontFamily = nextState.font;
   matrix.refreshStyles();
 
@@ -102,6 +121,10 @@ function renderAudio(nextState) {
 }
 
 function renderClock(nextState) {
+  if (nextState.timerMode === "pomodoro") {
+    clock.renderText(pomodoro.formatRemaining(nextState.pomodoroRemainingMs), nextState);
+    return;
+  }
   clock.render(nextState);
 }
 
@@ -158,7 +181,11 @@ function scheduleSave() {
 }
 
 function updateState(partial) {
-  state = normalizeState({ ...state, ...partial });
+  const previousState = state;
+  state = pomodoro.reconcileState(
+    previousState,
+    normalizeState({ ...state, ...partial }),
+  );
   render();
   ui.setControlsFromState(state);
   ui.updateScrollHint();
@@ -207,9 +234,33 @@ ui.bindToggle(ui.refs.toggles.fullscreen, async (checked) => {
     updateState({ fullscreen: Boolean(document.fullscreenElement) });
   }
 });
+ui.bindSelect(ui.refs.timerModeSelect, (mode) => updateState({ timerMode: mode }));
 ui.bindRange(ui.refs.soundVolumeSlider, (value) =>
   updateState({ soundVolume: Number(value) }),
 );
+ui.bindNumber(ui.refs.pomodoroWorkInput, (value) =>
+  updateState({ pomodoroWorkMinutes: value }),
+);
+ui.bindNumber(ui.refs.pomodoroShortBreakInput, (value) =>
+  updateState({ pomodoroShortBreakMinutes: value }),
+);
+ui.bindNumber(ui.refs.pomodoroLongBreakInput, (value) =>
+  updateState({ pomodoroLongBreakMinutes: value }),
+);
+ui.bindNumber(ui.refs.pomodoroCyclesInput, (value) =>
+  updateState({ pomodoroCyclesBeforeLongBreak: value }),
+);
+ui.bindClick(ui.refs.pomodoroStartPauseBtn, () => {
+  updateState(
+    state.pomodoroRunning ? pomodoro.pause(state) : pomodoro.start(state),
+  );
+});
+ui.bindClick(ui.refs.pomodoroResetBtn, () => {
+  updateState(pomodoro.reset(state));
+});
+ui.bindClick(ui.refs.pomodoroSkipBtn, () => {
+  updateState(pomodoro.skip(state));
+});
 ui.bindSelect(ui.refs.modeSelect, (mode) =>
   updateState({
     lightMode: mode === "light",
@@ -237,7 +288,15 @@ function startClockTicker() {
   if (clockTimerId !== null || document.hidden) {
     return;
   }
-  clockTimerId = window.setInterval(() => renderClock(state), 1000);
+  clockTimerId = window.setInterval(() => {
+    if (state.timerMode === "pomodoro" && state.pomodoroRunning) {
+      const nextState = pomodoro.tick(state);
+      if (nextState !== state) {
+        state = nextState;
+      }
+    }
+    renderClock(state);
+  }, 1000);
 }
 
 function stopClockTicker() {
@@ -273,6 +332,7 @@ window.addEventListener("fullscreenchange", () => {
 window.matrixClock = {
   getState: () => ({ ...state }),
   formatTime: clock.formatTime,
+  formatPomodoroTime: pomodoro.formatRemaining,
 };
 
 window.addEventListener("beforeunload", () => {

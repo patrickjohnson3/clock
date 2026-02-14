@@ -30,6 +30,10 @@ export function createSettings({
     }
 
     return normalizeState({
+      timerMode:
+        saved.timerMode === "pomodoro" || saved.timerMode === "clock"
+          ? saved.timerMode
+          : defaults.timerMode,
       glitch:
         typeof saved.glitch === "boolean" ? saved.glitch : defaults.glitch,
       glyph: typeof saved.glyph === "boolean" ? saved.glyph : defaults.glyph,
@@ -81,6 +85,25 @@ export function createSettings({
           ? saved.matrixMode
           : defaults.matrixMode,
       font: typeof saved.font === "string" ? saved.font : defaults.font,
+      pomodoroWorkMinutes: Number.isFinite(saved.pomodoroWorkMinutes)
+        ? saved.pomodoroWorkMinutes
+        : defaults.pomodoroWorkMinutes,
+      pomodoroShortBreakMinutes: Number.isFinite(saved.pomodoroShortBreakMinutes)
+        ? saved.pomodoroShortBreakMinutes
+        : defaults.pomodoroShortBreakMinutes,
+      pomodoroLongBreakMinutes: Number.isFinite(saved.pomodoroLongBreakMinutes)
+        ? saved.pomodoroLongBreakMinutes
+        : defaults.pomodoroLongBreakMinutes,
+      pomodoroCyclesBeforeLongBreak: Number.isFinite(
+        saved.pomodoroCyclesBeforeLongBreak,
+      )
+        ? saved.pomodoroCyclesBeforeLongBreak
+        : defaults.pomodoroCyclesBeforeLongBreak,
+      pomodoroPhase: defaults.pomodoroPhase,
+      pomodoroRemainingMs: defaults.pomodoroRemainingMs,
+      pomodoroRunning: false,
+      pomodoroCompletedWorkSessions: 0,
+      pomodoroLastTickMs: null,
       fullscreen: false,
       persistStorage,
     });
@@ -101,6 +124,11 @@ export function createSettings({
       const persistedState = { ...state };
       delete persistedState.persistStorage;
       delete persistedState.fullscreen;
+      delete persistedState.pomodoroPhase;
+      delete persistedState.pomodoroRemainingMs;
+      delete persistedState.pomodoroRunning;
+      delete persistedState.pomodoroCompletedWorkSessions;
+      delete persistedState.pomodoroLastTickMs;
       localStorage.setItem(storageKey, JSON.stringify(persistedState));
     } catch {
       // Ignore storage failures.

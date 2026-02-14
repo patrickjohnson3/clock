@@ -20,6 +20,13 @@
         <section class="controls-section">
           <strong>General</strong>
           <label>
+            Clock Mode
+            <select id="timerModeSelect">
+              <option value="clock">Clock</option>
+              <option value="pomodoro">Pomodoro</option>
+            </select>
+          </label>
+          <label>
             Display Mode
             <select id="modeSelect">
               <option value="dark">Dark Mode</option>
@@ -73,6 +80,43 @@
             ><input type="checkbox" id="glyphToggle" /> Matrix Glyph
             Filter</label
           >
+        </section>
+
+        <section class="controls-section">
+          <strong>Pomodoro</strong>
+          <label>
+            Work Minutes
+            <input type="number" id="pomodoroWorkInput" min="1" max="90" step="1" />
+          </label>
+          <label>
+            Short Break
+            <input
+              type="number"
+              id="pomodoroShortBreakInput"
+              min="1"
+              max="30"
+              step="1"
+            />
+          </label>
+          <label>
+            Long Break
+            <input type="number" id="pomodoroLongBreakInput" min="5" max="60" step="1" />
+          </label>
+          <label>
+            Cycles to Long Break
+            <input
+              type="number"
+              id="pomodoroCyclesInput"
+              min="2"
+              max="8"
+              step="1"
+            />
+          </label>
+          <div class="pomodoro-actions">
+            <button type="button" id="pomodoroStartPauseBtn">Start</button>
+            <button type="button" id="pomodoroResetBtn">Reset</button>
+            <button type="button" id="pomodoroSkipBtn">Skip</button>
+          </div>
         </section>
 
         <section class="controls-section">

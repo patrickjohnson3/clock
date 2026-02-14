@@ -8,6 +8,7 @@ export const SYSTEM_FONT =
   "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
 
 export const DEFAULTS = {
+  timerMode: "clock",
   glitch: false,
   glyph: false,
   hour24: false,
@@ -25,6 +26,15 @@ export const DEFAULTS = {
   matrixMode: false,
   font: SYSTEM_FONT,
   fullscreen: false,
+  pomodoroWorkMinutes: 25,
+  pomodoroShortBreakMinutes: 5,
+  pomodoroLongBreakMinutes: 15,
+  pomodoroCyclesBeforeLongBreak: 4,
+  pomodoroPhase: "work",
+  pomodoroRemainingMs: 25 * 60 * 1000,
+  pomodoroRunning: false,
+  pomodoroCompletedWorkSessions: 0,
+  pomodoroLastTickMs: null,
   persistStorage: false,
 };
 

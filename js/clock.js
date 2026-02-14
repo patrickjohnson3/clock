@@ -89,8 +89,8 @@ export function createClock({ container, chars, tuning }) {
     }
   }
 
-  function render(state) {
-    const time = formatTime(new Date(), state);
+  function renderText(text, state) {
+    const time = String(text);
 
     for (let i = 0; i < time.length; i += 1) {
       const char = time[i];
@@ -110,8 +110,13 @@ export function createClock({ container, chars, tuning }) {
     trimSpans(time.length);
   }
 
+  function render(state) {
+    renderText(formatTime(new Date(), state), state);
+  }
+
   return {
     render,
+    renderText,
     formatTime,
   };
 }
