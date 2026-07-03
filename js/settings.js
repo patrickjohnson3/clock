@@ -45,6 +45,10 @@ export function createSettings({
           : typeof saved.hideAmPm === "boolean"
             ? !saved.hideAmPm
             : defaults.showAmPm,
+      hideSeconds:
+        typeof saved.hideSeconds === "boolean"
+          ? saved.hideSeconds
+          : defaults.hideSeconds,
       matrix:
         typeof saved.matrix === "boolean" ? saved.matrix : defaults.matrix,
       glow: typeof saved.glow === "boolean" ? saved.glow : defaults.glow,

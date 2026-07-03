@@ -2,23 +2,28 @@ export function createClock({ container, chars, tuning }) {
   const spans = [];
   const formatterByHourMode = new Map();
 
-  function getFormatter(hour24) {
-    const key = hour24 ? "24" : "12";
+  function getFormatter(hour24, hideSeconds) {
+    const key = `${hour24 ? "24" : "12"}-${hideSeconds ? "no-seconds" : "seconds"}`;
     if (formatterByHourMode.has(key)) {
       return formatterByHourMode.get(key);
     }
-    const formatter = new Intl.DateTimeFormat("en-GB", {
+    const options = {
       hour: "numeric",
       minute: "2-digit",
-      second: "2-digit",
       hour12: !hour24,
-    });
+    };
+
+    if (!hideSeconds) {
+      options.second = "2-digit";
+    }
+
+    const formatter = new Intl.DateTimeFormat("en-GB", options);
     formatterByHourMode.set(key, formatter);
     return formatter;
   }
 
   function formatTime(now, state) {
-    const formatter = getFormatter(state.hour24);
+    const formatter = getFormatter(state.hour24, state.hideSeconds);
     if (state.showAmPm) {
       return formatter.format(now);
     }

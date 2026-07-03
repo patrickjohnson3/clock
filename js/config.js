@@ -12,6 +12,7 @@ export const DEFAULTS = {
   glyph: false,
   hour24: false,
   showAmPm: false,
+  hideSeconds: false,
   matrix: false,
   glow: false,
   neon: false,
