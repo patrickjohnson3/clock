@@ -167,9 +167,6 @@ async function syncWakeLock(nextState) {
     }
     wakeLockSentinel.addEventListener("release", () => {
       wakeLockSentinel = null;
-      if (state.wakeLock && !document.hidden) {
-        window.setTimeout(() => syncWakeLock(state), 0);
-      }
     });
   } catch {
     wakeLockSentinel = null;
