@@ -91,7 +91,9 @@ export function createSettings({
       font: typeof saved.font === "string" ? saved.font : defaults.font,
       fullscreen: false,
       wakeLock:
-        typeof saved.wakeLock === "boolean" ? saved.wakeLock : defaults.wakeLock,
+        typeof saved.wakeLock === "boolean"
+          ? saved.wakeLock
+          : defaults.wakeLock,
       persistStorage,
     });
   }
