@@ -73,6 +73,8 @@ const soundManager = createSoundManager({
 let state = settings.load();
 let saveTimerId = null;
 let clockTimerId = null;
+let wakeLockSentinel = null;
+let wakeLockRequest = null;
 ui.setControlsFromState(state);
 ui.updateScrollHint();
 
@@ -133,10 +135,54 @@ async function setFullscreen(enabled) {
   }
 }
 
+async function releaseWakeLock() {
+  const sentinel = wakeLockSentinel;
+  wakeLockSentinel = null;
+  if (!sentinel) {
+    return;
+  }
+  try {
+    await sentinel.release();
+  } catch {
+    // Ignore release failures; the browser may have already dropped it.
+  }
+}
+
+async function syncWakeLock(nextState) {
+  if (!nextState.wakeLock || document.hidden) {
+    await releaseWakeLock();
+    return;
+  }
+
+  if (wakeLockSentinel || wakeLockRequest || !navigator.wakeLock) {
+    return;
+  }
+
+  wakeLockRequest = navigator.wakeLock.request("screen");
+  try {
+    wakeLockSentinel = await wakeLockRequest;
+    if (!state.wakeLock || document.hidden) {
+      await releaseWakeLock();
+      return;
+    }
+    wakeLockSentinel.addEventListener("release", () => {
+      wakeLockSentinel = null;
+      if (state.wakeLock && !document.hidden) {
+        window.setTimeout(() => syncWakeLock(state), 0);
+      }
+    });
+  } catch {
+    wakeLockSentinel = null;
+  } finally {
+    wakeLockRequest = null;
+  }
+}
+
 function render() {
   renderVisuals(state);
   renderAudio(state);
   renderClock(state);
+  syncWakeLock(state);
 }
 
 function flushSave() {
@@ -207,6 +253,9 @@ ui.bindToggle(ui.refs.toggles.fullscreen, async (checked) => {
     updateState({ fullscreen: Boolean(document.fullscreenElement) });
   }
 });
+ui.bindToggle(ui.refs.toggles.wakeLock, (checked) =>
+  updateState({ wakeLock: checked }),
+);
 ui.bindRange(ui.refs.soundVolumeSlider, (value) =>
   updateState({ soundVolume: Number(value) }),
 );
@@ -254,6 +303,7 @@ window.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     stopClockTicker();
     matrix.stop();
+    syncWakeLock(state);
     return;
   }
 
@@ -261,6 +311,7 @@ window.addEventListener("visibilitychange", () => {
   if (state.matrix) {
     matrix.start();
   }
+  syncWakeLock(state);
 });
 
 window.addEventListener("fullscreenchange", () => {
@@ -277,5 +328,6 @@ window.matrixClock = {
 
 window.addEventListener("beforeunload", () => {
   flushSave();
+  releaseWakeLock();
   soundManager.stopAll();
 });

@@ -25,6 +25,7 @@ export const DEFAULTS = {
   matrixMode: false,
   font: SYSTEM_FONT,
   fullscreen: false,
+  wakeLock: true,
   persistStorage: false,
 };
 

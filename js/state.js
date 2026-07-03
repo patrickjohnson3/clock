@@ -6,6 +6,7 @@ export function normalizeState(state) {
   const normalized = {
     ...state,
     soundVolume: clampSoundVolume(state.soundVolume),
+    wakeLock: Boolean(state.wakeLock),
   };
 
   // Display mode is exclusive and matrix mode enforces matrix visual pairing.
