@@ -10,6 +10,7 @@ export function createUI(defaults) {
       glyph: document.getElementById("glyphToggle"),
       hour24: document.getElementById("hour24Toggle"),
       showAmPm: document.getElementById("showAmPmToggle"),
+      leadingZero: document.getElementById("leadingZeroToggle"),
       hideSeconds: document.getElementById("hideSecondsToggle"),
       matrix: document.getElementById("matrixToggle"),
       glow: document.getElementById("glowToggle"),
@@ -72,6 +73,7 @@ export function createUI(defaults) {
     setChecked(refs.toggles.glyph, state.glyph);
     setChecked(refs.toggles.hour24, state.hour24);
     setChecked(refs.toggles.showAmPm, state.showAmPm);
+    setChecked(refs.toggles.leadingZero, state.leadingZero);
     setChecked(refs.toggles.hideSeconds, state.hideSeconds);
     setChecked(refs.toggles.matrix, state.matrix);
     setChecked(refs.toggles.glow, state.glow);

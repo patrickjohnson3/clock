@@ -5,6 +5,7 @@ export function clampSoundVolume(value) {
 export function normalizeState(state) {
   const normalized = {
     ...state,
+    leadingZero: Boolean(state.leadingZero),
     hideSeconds: Boolean(state.hideSeconds),
     soundVolume: clampSoundVolume(state.soundVolume),
     wakeLock: Boolean(state.wakeLock),

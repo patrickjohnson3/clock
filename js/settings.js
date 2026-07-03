@@ -45,6 +45,10 @@ export function createSettings({
           : typeof saved.hideAmPm === "boolean"
             ? !saved.hideAmPm
             : defaults.showAmPm,
+      leadingZero:
+        typeof saved.leadingZero === "boolean"
+          ? saved.leadingZero
+          : defaults.leadingZero,
       hideSeconds:
         typeof saved.hideSeconds === "boolean"
           ? saved.hideSeconds

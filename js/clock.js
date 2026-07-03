@@ -2,13 +2,17 @@ export function createClock({ container, chars, tuning }) {
   const spans = [];
   const formatterByHourMode = new Map();
 
-  function getFormatter(hour24, hideSeconds) {
-    const key = `${hour24 ? "24" : "12"}-${hideSeconds ? "no-seconds" : "seconds"}`;
+  function getFormatter(hour24, leadingZero, hideSeconds) {
+    const key = [
+      hour24 ? "24" : "12",
+      leadingZero ? "leading-zero" : "no-leading-zero",
+      hideSeconds ? "no-seconds" : "seconds",
+    ].join("-");
     if (formatterByHourMode.has(key)) {
       return formatterByHourMode.get(key);
     }
     const options = {
-      hour: "numeric",
+      hour: leadingZero ? "2-digit" : "numeric",
       minute: "2-digit",
       hour12: !hour24,
     };
@@ -23,7 +27,11 @@ export function createClock({ container, chars, tuning }) {
   }
 
   function formatTime(now, state) {
-    const formatter = getFormatter(state.hour24, state.hideSeconds);
+    const formatter = getFormatter(
+      state.hour24,
+      state.leadingZero,
+      state.hideSeconds,
+    );
     if (state.showAmPm) {
       return formatter.format(now);
     }

@@ -223,6 +223,9 @@ ui.bindToggle(ui.refs.toggles.hour24, (checked) =>
 ui.bindToggle(ui.refs.toggles.showAmPm, (checked) =>
   updateState({ showAmPm: checked }),
 );
+ui.bindToggle(ui.refs.toggles.leadingZero, (checked) =>
+  updateState({ leadingZero: checked }),
+);
 ui.bindToggle(ui.refs.toggles.hideSeconds, (checked) =>
   updateState({ hideSeconds: checked }),
 );
