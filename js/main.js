@@ -40,6 +40,15 @@ function getSharedAudioContext() {
   return sharedAudioContext;
 }
 
+function resumeSharedAudioContext() {
+  if (sharedAudioContext?.state === "suspended") {
+    sharedAudioContext.resume().catch(() => {});
+  }
+}
+
+window.addEventListener("pointerup", resumeSharedAudioContext);
+window.addEventListener("keydown", resumeSharedAudioContext);
+
 const matrix = createMatrix({
   canvas: ui.refs.canvas,
   chars: CHARS,

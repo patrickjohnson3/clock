@@ -38,6 +38,14 @@ export function createAudioContext() {
 
   return {
     state: "running",
+    allowResume: false,
+    resume() {
+      if (!this.allowResume) {
+        return Promise.reject(new Error("User interaction required"));
+      }
+      this.state = "running";
+      return Promise.resolve();
+    },
     sampleRate: 100,
     currentTime: 0,
     destination: {},
