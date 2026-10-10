@@ -575,6 +575,7 @@ export function createDubTechnoEngine(config, { getContext }) {
   let stepIndex = 0;
   let volume = 1;
   let isRunning = false;
+  const percussionVoices = new Set();
 
   function ensureContext() {
     if (audioContext) {
@@ -633,6 +634,23 @@ export function createDubTechnoEngine(config, { getContext }) {
     return osc;
   }
 
+  function releasePercussionVoice(voice) {
+    if (!percussionVoices.delete(voice)) return;
+    voice.source.disconnect();
+    voice.filter.disconnect();
+    voice.gain.disconnect();
+  }
+
+  function startPercussionVoice(source, filter, gain, time, duration) {
+    const voice = { source, filter, gain };
+    percussionVoices.add(voice);
+    source.addEventListener("ended", () => releasePercussionVoice(voice), {
+      once: true,
+    });
+    source.start(time);
+    source.stop(time + duration);
+  }
+
   function scheduleKick(time) {
     const osc = audioContext.createOscillator();
     const gain = audioContext.createGain();
@@ -654,8 +672,7 @@ export function createDubTechnoEngine(config, { getContext }) {
     kickFilter.connect(gain);
     gain.connect(duckGain);
 
-    osc.start(time);
-    osc.stop(time + 0.28);
+    startPercussionVoice(osc, kickFilter, gain, time, 0.28);
 
     duckGain.gain.cancelScheduledValues(time);
     duckGain.gain.setValueAtTime(duckGain.gain.value, time);
@@ -683,8 +700,7 @@ export function createDubTechnoEngine(config, { getContext }) {
     filter.connect(gain);
     gain.connect(hatGain);
 
-    source.start(time);
-    source.stop(time + 0.14);
+    startPercussionVoice(source, filter, gain, time, 0.14);
   }
 
   function schedule() {
@@ -762,6 +778,11 @@ export function createDubTechnoEngine(config, { getContext }) {
     isRunning = false;
     document.removeEventListener("visibilitychange", handleVisibilityChange);
     stopScheduler();
+
+    for (const voice of percussionVoices) {
+      voice.source.stop();
+      releasePercussionVoice(voice);
+    }
 
     if (lfo) {
       lfo.stop();

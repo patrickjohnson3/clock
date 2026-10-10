@@ -74,8 +74,15 @@ export function createAudioContext() {
       frequency: parameter(),
       detune: parameter(),
       Q: parameter(),
-      connect() {},
-      disconnect() {},
+      connections: [],
+      disconnectCount: 0,
+      connect(destination) {
+        this.connections.push(destination);
+      },
+      disconnect() {
+        this.connections.length = 0;
+        this.disconnectCount += 1;
+      },
     };
     nodes.push(result);
     return result;

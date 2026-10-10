@@ -193,6 +193,101 @@ test("Dub Techno pauses scheduling while hidden and returns without a catch-up b
   assert.equal(window.pendingTimerCount, 0);
 });
 
+test("Dub Techno cancels active and queued percussion without stopping mixed sounds", (t) => {
+  const context = createAudioContext();
+  const window = createWindow({
+    onAdvance: (milliseconds) => context.advanceTime(milliseconds / 1000),
+  });
+  installGlobals(t, {
+    window,
+    document: Object.assign(new EventTarget(), { hidden: false }),
+  });
+  const brownNoise = createBrownNoiseEngine(TUNING.audio.brownNoise, {
+    getContext: () => context,
+  });
+  const engine = createDubTechnoEngine(TUNING.audio.dubTechno, {
+    getContext: () => context,
+  });
+  brownNoise.start();
+  const mixedSources = [...context.activeSources];
+
+  for (let cycle = 0; cycle < 2; cycle += 1) {
+    engine.start();
+    window.advanceTime(50);
+    const restartedSources = [...context.activeSources];
+    context.finishStoppedSources();
+    assert.deepEqual(context.activeSources, restartedSources);
+    window.advanceTime(150);
+    const percussion = context.sources.filter(
+      (source) => source.stopTime > context.currentTime,
+    );
+    assert.ok(
+      percussion.some((source) => source.startTime <= context.currentTime),
+    );
+    assert.ok(
+      percussion.some((source) => source.startTime > context.currentTime),
+    );
+    const voiceNodes = percussion.flatMap((source) => {
+      const filter = source.connections[0];
+      return [source, filter, filter.connections[0]];
+    });
+
+    engine.stop();
+
+    assert.deepEqual(context.activeSources, mixedSources);
+    assert.ok(
+      percussion.every((source) => source.stopTime <= context.currentTime),
+    );
+    assert.ok(voiceNodes.every((node) => node.disconnectCount === 1));
+    engine.stop();
+    assert.ok(voiceNodes.every((node) => node.disconnectCount === 1));
+    assert.equal(window.pendingTimerCount, 0);
+  }
+  window.advanceTime(1000);
+  context.finishStoppedSources();
+  assert.deepEqual(context.activeSources, mixedSources);
+  brownNoise.stop();
+  assert.equal(context.activeSources.length, 0);
+});
+
+test("Dub Techno releases naturally ended percussion before a later stop", (t) => {
+  const context = createAudioContext();
+  const window = createWindow({
+    onAdvance: (milliseconds) => context.advanceTime(milliseconds / 1000),
+  });
+  installGlobals(t, {
+    window,
+    document: Object.assign(new EventTarget(), { hidden: false }),
+  });
+  const engine = createDubTechnoEngine(TUNING.audio.dubTechno, {
+    getContext: () => context,
+  });
+  engine.start();
+  window.advanceTime(50);
+  const percussion = context.sources.filter(
+    (source) => source.stopTime !== null,
+  );
+  const voiceNodes = percussion.flatMap((source) => {
+    const filter = source.connections[0];
+    return [source, filter, filter.connections[0]];
+  });
+  window.advanceTime(500);
+  context.finishStoppedSources();
+  assert.ok(percussion.every((source) => source.ended));
+  assert.ok(voiceNodes.every((node) => node.disconnectCount === 1));
+  const stopTimes = percussion.map((source) => source.stopTime);
+
+  engine.stop();
+  context.finishStoppedSources();
+
+  assert.deepEqual(
+    percussion.map((source) => source.stopTime),
+    stopTimes,
+  );
+  assert.ok(voiceNodes.every((node) => node.disconnectCount === 1));
+  assert.equal(context.activeSources.length, 0);
+});
+
 for (const key of ["rainStorm", "aircraftCabin"]) {
   test(`${key} varies over time and cancels its next variation on stop`, (t) => {
     const context = createAudioContext();
