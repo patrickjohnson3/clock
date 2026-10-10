@@ -530,3 +530,33 @@ test("settings saves are debounced and pending changes flush on unload", async (
   window.advanceTime(200);
   assert.equal(storageWrites.length, 4);
 });
+
+for (const alreadySaved of [false, true]) {
+  for (const optedOut of [false, true]) {
+    test(`unload preserves another tab's ${optedOut ? "opt-out" : "settings"} ${alreadySaved ? "after saving" : "without edits"}`, async (t) => {
+      const { window, saved, storageWrites, setToggle } = createAppEnvironment(
+        t,
+        {
+          hour24: false,
+        },
+      );
+      await import(`../js/main.js?clean-unload-${alreadySaved}-${optedOut}`);
+      if (alreadySaved) {
+        setToggle("leadingZero", true);
+        window.advanceTime(120);
+      }
+
+      // Simulate a newer write from a different tab on the same origin.
+      saved.set(STORAGE_ENABLED_KEY, JSON.stringify(!optedOut));
+      if (optedOut) saved.delete(STORAGE_KEY);
+      else saved.set(STORAGE_KEY, JSON.stringify({ hour24: true }));
+      const newerSettings = new Map(saved);
+      const writeCount = storageWrites.length;
+
+      window.dispatchEvent(new Event("beforeunload"));
+
+      assert.equal(storageWrites.length, writeCount);
+      assert.deepEqual(saved, newerSettings);
+    });
+  }
+}

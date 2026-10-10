@@ -201,10 +201,9 @@ function render() {
 }
 
 function flushSave() {
-  if (saveTimerId !== null) {
-    window.clearTimeout(saveTimerId);
-    saveTimerId = null;
-  }
+  if (saveTimerId === null) return;
+  window.clearTimeout(saveTimerId);
+  saveTimerId = null;
   saveSettings(state);
 }
 
