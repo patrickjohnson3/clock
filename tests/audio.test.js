@@ -22,6 +22,53 @@ const factories = {
   aircraftCabin: createAircraftCabinEngine,
 };
 
+for (const [key, createEngine] of Object.entries({
+  ...factories,
+  dubTechno: createDubTechnoEngine,
+})) {
+  test(`${key} leaves context playback permission to its owner`, (t) => {
+    installGlobals(t, {
+      window: createWindow(),
+      document: Object.assign(new EventTarget(), { hidden: false }),
+    });
+    const context = createAudioContext();
+    context.state = "suspended";
+    let resumes = 0;
+    context.resume = () => {
+      resumes += 1;
+      return Promise.resolve();
+    };
+    const engine = createEngine(TUNING.audio[key], {
+      getContext: () => context,
+    });
+    engine.start();
+    assert.equal(resumes, 0);
+    assert.equal(context.state, "suspended");
+    engine.stop();
+  });
+
+  test(`${key} can retry when the shared context is initially unavailable`, (t) => {
+    const window = createWindow();
+    installGlobals(t, {
+      window,
+      document: Object.assign(new EventTarget(), { hidden: false }),
+    });
+    let availableContext = null;
+    const engine = createEngine(TUNING.audio[key], {
+      getContext: () => availableContext,
+    });
+    engine.start();
+    engine.stop();
+    assert.equal(window.pendingTimerCount, 0);
+    availableContext = createAudioContext();
+    engine.start();
+    assert.ok(availableContext.activeSources.length > 0);
+    engine.stop();
+    assert.equal(availableContext.activeSources.length, 0);
+    assert.equal(window.pendingTimerCount, 0);
+  });
+}
+
 for (const [key, createEngine] of Object.entries(factories)) {
   test(`${key} stops all sources after a rapid restart`, (t) => {
     installGlobals(t, { window: createWindow() });

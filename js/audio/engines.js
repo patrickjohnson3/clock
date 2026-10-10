@@ -2,11 +2,7 @@ function clampVolume(value) {
   return Math.max(0, Math.min(1, value));
 }
 
-function getAudioContextFactory() {
-  return window.AudioContext || window.webkitAudioContext;
-}
-
-export function createBrownNoiseEngine(config, { getContext } = {}) {
+export function createBrownNoiseEngine(config, { getContext }) {
   let audioContext = null;
   let gainNode = null;
   let sourceNode = null;
@@ -17,15 +13,7 @@ export function createBrownNoiseEngine(config, { getContext } = {}) {
       return audioContext;
     }
 
-    if (getContext) {
-      audioContext = getContext();
-    } else {
-      const AudioContextClass = getAudioContextFactory();
-      if (!AudioContextClass) {
-        return null;
-      }
-      audioContext = new AudioContextClass();
-    }
+    audioContext = getContext();
 
     if (!audioContext) {
       return null;
@@ -58,10 +46,6 @@ export function createBrownNoiseEngine(config, { getContext } = {}) {
       return;
     }
 
-    if (context.state === "suspended") {
-      context.resume().catch(() => {});
-    }
-
     sourceNode = context.createBufferSource();
     sourceNode.buffer = createBuffer(context);
     sourceNode.loop = true;
@@ -88,7 +72,7 @@ export function createBrownNoiseEngine(config, { getContext } = {}) {
   return { start, stop, setVolume };
 }
 
-export function createPinkNoiseEngine(config, { getContext } = {}) {
+export function createPinkNoiseEngine(config, { getContext }) {
   let audioContext = null;
   let gainNode = null;
   let highShelfNode = null;
@@ -100,15 +84,7 @@ export function createPinkNoiseEngine(config, { getContext } = {}) {
       return audioContext;
     }
 
-    if (getContext) {
-      audioContext = getContext();
-    } else {
-      const AudioContextClass = getAudioContextFactory();
-      if (!AudioContextClass) {
-        return null;
-      }
-      audioContext = new AudioContextClass();
-    }
+    audioContext = getContext();
 
     if (!audioContext) {
       return null;
@@ -154,10 +130,6 @@ export function createPinkNoiseEngine(config, { getContext } = {}) {
       return;
     }
 
-    if (context.state === "suspended") {
-      context.resume().catch(() => {});
-    }
-
     highShelfNode = context.createBiquadFilter();
     highShelfNode.type = "highshelf";
     highShelfNode.frequency.value = config.shelfFrequency;
@@ -193,7 +165,7 @@ export function createPinkNoiseEngine(config, { getContext } = {}) {
   return { start, stop, setVolume };
 }
 
-export function createRainStormEngine(config, { getContext } = {}) {
+export function createRainStormEngine(config, { getContext }) {
   let audioContext = null;
   let masterGain = null;
   let bodyGain = null;
@@ -210,15 +182,7 @@ export function createRainStormEngine(config, { getContext } = {}) {
       return audioContext;
     }
 
-    if (getContext) {
-      audioContext = getContext();
-    } else {
-      const AudioContextClass = getAudioContextFactory();
-      if (!AudioContextClass) {
-        return null;
-      }
-      audioContext = new AudioContextClass();
-    }
+    audioContext = getContext();
 
     if (!audioContext) {
       return null;
@@ -330,10 +294,6 @@ export function createRainStormEngine(config, { getContext } = {}) {
       return;
     }
 
-    if (context.state === "suspended") {
-      context.resume().catch(() => {});
-    }
-
     bodyFilterNode = context.createBiquadFilter();
     bodyFilterNode.type = "lowpass";
     bodyFilterNode.frequency.value = config.bodyLowpassFrequency;
@@ -396,7 +356,7 @@ export function createRainStormEngine(config, { getContext } = {}) {
   return { start, stop, setVolume };
 }
 
-export function createAircraftCabinEngine(config, { getContext } = {}) {
+export function createAircraftCabinEngine(config, { getContext }) {
   let audioContext = null;
   let masterGain = null;
   let bodyGain = null;
@@ -416,15 +376,7 @@ export function createAircraftCabinEngine(config, { getContext } = {}) {
       return audioContext;
     }
 
-    if (getContext) {
-      audioContext = getContext();
-    } else {
-      const AudioContextClass = getAudioContextFactory();
-      if (!AudioContextClass) {
-        return null;
-      }
-      audioContext = new AudioContextClass();
-    }
+    audioContext = getContext();
 
     if (!audioContext) {
       return null;
@@ -524,10 +476,6 @@ export function createAircraftCabinEngine(config, { getContext } = {}) {
       return;
     }
 
-    if (context.state === "suspended") {
-      context.resume().catch(() => {});
-    }
-
     bodyFilterNode = context.createBiquadFilter();
     bodyFilterNode.type = "lowpass";
     bodyFilterNode.frequency.value = config.bodyLowpassFrequency;
@@ -610,7 +558,7 @@ export function createAircraftCabinEngine(config, { getContext } = {}) {
   return { start, stop, setVolume };
 }
 
-export function createDubTechnoEngine(config, { getContext } = {}) {
+export function createDubTechnoEngine(config, { getContext }) {
   let audioContext = null;
   let masterGain = null;
   let duckGain = null;
@@ -633,15 +581,7 @@ export function createDubTechnoEngine(config, { getContext } = {}) {
       return audioContext;
     }
 
-    if (getContext) {
-      audioContext = getContext();
-    } else {
-      const AudioContextClass = getAudioContextFactory();
-      if (!AudioContextClass) {
-        return null;
-      }
-      audioContext = new AudioContextClass();
-    }
+    audioContext = getContext();
 
     if (!audioContext) {
       return null;
@@ -796,10 +736,6 @@ export function createDubTechnoEngine(config, { getContext } = {}) {
     const context = ensureContext();
     if (!context || isRunning) {
       return;
-    }
-
-    if (context.state === "suspended") {
-      context.resume().catch(() => {});
     }
 
     if (!lfo) {
