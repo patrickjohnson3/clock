@@ -80,7 +80,7 @@ product documentation and the module map.
 
 ## Setup and Validation
 
-- Use `npm ci` to install the locked development dependencies. CI uses Node 20 on
+- Use `npm ci` to install the locked development dependencies. CI uses Node 24 on
   Ubuntu; `package.json` does not declare a Node engine requirement.
 - Serve the repository with `python3 -m http.server 8000` and open
   `http://localhost:8000` for browser validation. Use HTTP serving for the ES module
