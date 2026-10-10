@@ -385,21 +385,6 @@ body.light-mode #controls option:hover {
   outline-offset: 2px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .glitch {
-    animation: none;
-  }
-
-  #controls.show-scroll-hint::before {
-    animation: none;
-  }
-
-  #controls,
-  #panelTab {
-    transition: none;
-  }
-}
-
 @media (max-width: 920px) {
   .controls-columns {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -530,5 +515,20 @@ body.light-mode #controls option:hover {
   }
   100% {
     transform: translateX(-50%) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glitch {
+    animation: none;
+  }
+
+  #controls.show-scroll-hint::before {
+    animation: none;
+  }
+
+  #controls,
+  #panelTab {
+    transition: none;
   }
 }
