@@ -314,7 +314,7 @@ strong {
 }
 
 #controls.collapsed + #panelTab {
-  opacity: 0.4;
+  opacity: 0.56;
   pointer-events: auto;
   transform: translateX(-50%) translateY(0);
 }
