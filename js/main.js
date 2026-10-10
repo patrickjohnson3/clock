@@ -277,57 +277,17 @@ function updateState(partial) {
   scheduleSave();
 }
 
-ui.bindToggle(ui.refs.toggles.glitch, (checked) =>
-  updateState({ glitch: checked }),
-);
-ui.bindToggle(ui.refs.toggles.glyph, (checked) =>
-  updateState({ glyph: checked }),
-);
-ui.bindToggle(ui.refs.toggles.hour24, (checked) =>
-  updateState({ hour24: checked }),
-);
-ui.bindToggle(ui.refs.toggles.showAmPm, (checked) =>
-  updateState({ showAmPm: checked }),
-);
-ui.bindToggle(ui.refs.toggles.leadingZero, (checked) =>
-  updateState({ leadingZero: checked }),
-);
-ui.bindToggle(ui.refs.toggles.hideSeconds, (checked) =>
-  updateState({ hideSeconds: checked }),
-);
-ui.bindToggle(ui.refs.toggles.matrix, (checked) =>
-  updateState({ matrix: checked }),
-);
-ui.bindToggle(ui.refs.toggles.glow, (checked) =>
-  updateState({ glow: checked }),
-);
-ui.bindToggle(ui.refs.toggles.neon, (checked) =>
-  updateState({ neon: checked }),
-);
-ui.bindToggle(ui.refs.toggles.brownNoise, (checked) =>
-  updateState({ brownNoise: checked }),
-);
-ui.bindToggle(ui.refs.toggles.pinkNoise, (checked) =>
-  updateState({ pinkNoise: checked }),
-);
-ui.bindToggle(ui.refs.toggles.rainStorm, (checked) =>
-  updateState({ rainStorm: checked }),
-);
-ui.bindToggle(ui.refs.toggles.aircraftCabin, (checked) =>
-  updateState({ aircraftCabin: checked }),
-);
-ui.bindToggle(ui.refs.toggles.dubTechno, (checked) =>
-  updateState({ dubTechno: checked }),
-);
+for (const [key, toggle] of Object.entries(ui.refs.toggles)) {
+  if (key !== "fullscreen") {
+    ui.bindToggle(toggle, (checked) => updateState({ [key]: checked }));
+  }
+}
 ui.bindToggle(ui.refs.toggles.fullscreen, async (checked) => {
   const success = await setFullscreen(checked);
   if (!success) {
     updateState({ fullscreen: Boolean(document.fullscreenElement) });
   }
 });
-ui.bindToggle(ui.refs.toggles.wakeLock, (checked) =>
-  updateState({ wakeLock: checked }),
-);
 ui.bindRange(ui.refs.soundVolumeSlider, (value) =>
   updateState({ soundVolume: Number(value) }),
 );
@@ -339,9 +299,6 @@ ui.bindSelect(ui.refs.modeSelect, (mode) =>
     lightMode: mode === "light",
     matrixMode: mode === "matrix",
   }),
-);
-ui.bindToggle(ui.refs.toggles.persistStorage, (checked) =>
-  updateState({ persistStorage: checked }),
 );
 ui.bindSelect(ui.refs.fontSelect, (font) => updateState({ font }));
 ui.bindCollapse();

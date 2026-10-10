@@ -70,23 +70,9 @@ export function createUI() {
   }
 
   function setControlsFromState(state) {
-    setChecked(refs.toggles.glitch, state.glitch);
-    setChecked(refs.toggles.glyph, state.glyph);
-    setChecked(refs.toggles.hour24, state.hour24);
-    setChecked(refs.toggles.showAmPm, state.showAmPm);
-    setChecked(refs.toggles.leadingZero, state.leadingZero);
-    setChecked(refs.toggles.hideSeconds, state.hideSeconds);
-    setChecked(refs.toggles.matrix, state.matrix);
-    setChecked(refs.toggles.glow, state.glow);
-    setChecked(refs.toggles.neon, state.neon);
-    setChecked(refs.toggles.brownNoise, state.brownNoise);
-    setChecked(refs.toggles.pinkNoise, state.pinkNoise);
-    setChecked(refs.toggles.rainStorm, state.rainStorm);
-    setChecked(refs.toggles.aircraftCabin, state.aircraftCabin);
-    setChecked(refs.toggles.dubTechno, state.dubTechno);
-    setChecked(refs.toggles.fullscreen, state.fullscreen);
-    setChecked(refs.toggles.wakeLock, state.wakeLock);
-    setChecked(refs.toggles.persistStorage, state.persistStorage);
+    for (const [key, toggle] of Object.entries(refs.toggles)) {
+      setChecked(toggle, state[key]);
+    }
     setValue(refs.soundVolumeSlider, String(state.soundVolume));
     setValue(refs.clockScaleSlider, String(state.clockScale));
 

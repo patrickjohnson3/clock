@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { setImmediate } from "node:timers";
 import {
   DEFAULTS,
   STORAGE_ENABLED_KEY,
@@ -437,4 +438,57 @@ test("clock options still render immediately without touching the background", a
     assert.equal(calls.canvasClears, 0);
     setToggle(key, false);
   }
+});
+
+test("every ordinary toggle updates its matching state key in both directions", async (t) => {
+  const { document, window } = createAppEnvironment(t, null);
+  await import("../js/main.js?ordinary-toggles");
+  for (const [key, initial] of Object.entries(DEFAULTS)) {
+    if (
+      typeof initial !== "boolean" ||
+      ["lightMode", "matrixMode", "fullscreen"].includes(key)
+    )
+      continue;
+    const toggle = document.getElementById(
+      key === "persistStorage" ? "storageToggle" : `${key}Toggle`,
+    );
+    assert.equal(toggle.checked, initial, key);
+    for (const checked of [!initial, initial]) {
+      toggle.checked = checked;
+      toggle.dispatchEvent(new Event("change"));
+      assert.equal(window.matrixClock.getState()[key], checked, key);
+      assert.equal(toggle.checked, checked, key);
+    }
+  }
+});
+
+test("fullscreen stays browser-owned and restores its control after rejection", async (t) => {
+  const { document, window, setToggle } = createAppEnvironment(t, null);
+  let requests = 0;
+  document.documentElement = {
+    async requestFullscreen() {
+      requests += 1;
+      document.fullscreenElement = this;
+      window.dispatchEvent(new Event("fullscreenchange"));
+    },
+  };
+  document.exitFullscreen = async () => {
+    document.fullscreenElement = null;
+    window.dispatchEvent(new Event("fullscreenchange"));
+  };
+  await import("../js/main.js?fullscreen-toggle");
+  setToggle("fullscreen", true);
+  await new Promise(setImmediate);
+  assert.equal(requests, 1);
+  assert.equal(window.matrixClock.getState().fullscreen, true);
+  setToggle("fullscreen", false);
+  await new Promise(setImmediate);
+  assert.equal(window.matrixClock.getState().fullscreen, false);
+
+  document.documentElement.requestFullscreen = () =>
+    Promise.reject(new Error("Denied"));
+  setToggle("fullscreen", true);
+  await new Promise(setImmediate);
+  assert.equal(window.matrixClock.getState().fullscreen, false);
+  assert.equal(document.getElementById("fullscreenToggle").checked, false);
 });
