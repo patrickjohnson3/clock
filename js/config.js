@@ -7,6 +7,16 @@ export const STORAGE_ENABLED_KEY = "matrixClockStorageEnabled";
 export const SYSTEM_FONT =
   "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
 
+export const FONT_FAMILIES = [
+  SYSTEM_FONT,
+  "'Space Mono', monospace",
+  "'IBM Plex Mono', monospace",
+  "'Roboto Mono', monospace",
+  "'Source Code Pro', monospace",
+  "'JetBrains Mono', monospace",
+  "'Fira Mono', monospace",
+];
+
 export const DEFAULTS = {
   glitch: false,
   glyph: false,

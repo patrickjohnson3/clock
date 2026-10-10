@@ -88,6 +88,17 @@ test("a restored custom font requests the optional stylesheet", async (t) => {
   assert.equal(document.body.style.fontFamily, font);
 });
 
+test("an unlisted saved font falls back consistently before reaching the UI", async (t) => {
+  const { window, document, stylesheets } = createAppEnvironment(t, {
+    font: "serif",
+  });
+  await import("../js/main.js?unlisted-font");
+  assert.equal(window.matrixClock.getState().font, SYSTEM_FONT);
+  assert.equal(document.getElementById("fontSelect").value, SYSTEM_FONT);
+  assert.equal(document.body.style.fontFamily, SYSTEM_FONT);
+  assert.equal(stylesheets.length, 0);
+});
+
 test("restored audio waits for playback permission and resumes without restarting sources", async (t) => {
   const { context, window, getContextCount } = createAppEnvironment(t, {
     brownNoise: true,

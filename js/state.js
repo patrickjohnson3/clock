@@ -1,3 +1,5 @@
+import { FONT_FAMILIES, SYSTEM_FONT } from "./config.js";
+
 export function clampSoundVolume(value) {
   return Math.max(0, Math.min(100, Number(value) || 0));
 }
@@ -5,6 +7,7 @@ export function clampSoundVolume(value) {
 export function normalizeState(state) {
   const normalized = {
     ...state,
+    font: FONT_FAMILIES.includes(state.font) ? state.font : SYSTEM_FONT,
     leadingZero: Boolean(state.leadingZero),
     hideSeconds: Boolean(state.hideSeconds),
     clockScale: Number.isFinite(state.clockScale)

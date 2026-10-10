@@ -20,7 +20,7 @@ import { createSettings } from "./settings.js";
 import { normalizeState } from "./state.js";
 import { createUI } from "./ui.js";
 
-const ui = createUI(DEFAULTS);
+const ui = createUI();
 const settings = createSettings({
   defaults: DEFAULTS,
   storageKey: STORAGE_KEY,

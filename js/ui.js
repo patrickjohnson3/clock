@@ -1,4 +1,4 @@
-export function createUI(defaults) {
+export function createUI() {
   const refs = {
     canvas: document.getElementById("matrix"),
     clock: document.getElementById("clock"),
@@ -90,12 +90,7 @@ export function createUI(defaults) {
     setValue(refs.soundVolumeSlider, String(state.soundVolume));
     setValue(refs.clockScaleSlider, String(state.clockScale));
 
-    if (refs.fontSelect) {
-      refs.fontSelect.value = state.font;
-      if (refs.fontSelect.value !== state.font) {
-        refs.fontSelect.value = defaults.font;
-      }
-    }
+    setValue(refs.fontSelect, state.font);
 
     setValue(
       refs.modeSelect,
