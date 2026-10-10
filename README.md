@@ -24,8 +24,7 @@ Live demo: [patrickjohnson3.github.io/clock](https://patrickjohnson3.github.io/c
 
 This project is static HTML/CSS/JS (no build step required).
 
-- Open `index.html` directly in a browser, or
-- Serve the folder locally with any static server
+Serve the repository folder with a static HTTP server so the browser can load its ES modules.
 
 Example (Python):
 

@@ -84,7 +84,7 @@ product documentation and the module map.
   Ubuntu; `package.json` does not declare a Node engine requirement.
 - Serve the repository with `python3 -m http.server 8000` and open
   `http://localhost:8000` for browser validation. Use HTTP serving for the ES module
-  entrypoint; the README's direct-file option is not a reliable module smoke test.
+  entrypoint; direct-file URLs can block module loading.
 - Run `npm test`, `npm run lint`, and `npm run format:check` before completing a
   change; these are the checks in `.github/workflows/quality.yml`. Documentation-only changes
   still need the format check. ESLint uses `eslint.config.js`; formatting uses
