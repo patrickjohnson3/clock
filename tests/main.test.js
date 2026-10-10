@@ -268,6 +268,42 @@ test("saved sounds do not prevent startup when Web Audio is unavailable", async 
   assert.equal(getContextCount(), 0);
 });
 
+for (const constructorName of ["AudioContext", "webkitAudioContext"]) {
+  test(`${constructorName} construction failure does not stop the clock or prevent a later retry`, async (t) => {
+    const { window, context, calls, getContextCount, setToggle } =
+      createAppEnvironment(t, { brownNoise: true }, { renderers: true });
+    const AudioContextClass = window.AudioContext;
+    delete window.AudioContext;
+    let attempts = 0;
+    window[constructorName] = function () {
+      attempts += 1;
+      throw new DOMException("Context limit reached", "NotSupportedError");
+    };
+
+    await import(`../js/main.js?failed-${constructorName}`);
+
+    assert.equal(window.matrixClock.getState().brownNoise, true);
+    assert.equal(calls.clockRenders, 1);
+    assert.equal(context.bufferCount, 0);
+    assert.equal(window.pendingTimerCount, 1);
+    window.advanceTime(1000);
+    assert.equal(calls.clockRenders, 2);
+    window.dispatchEvent(new Event("pointerup"));
+    window.dispatchEvent(new Event("keydown"));
+    assert.equal(attempts, 1);
+
+    window[constructorName] = AudioContextClass;
+    setToggle("brownNoise", false);
+    setToggle("brownNoise", true);
+    context.allowResume = true;
+    window.dispatchEvent(new Event("pointerup"));
+    assert.equal(getContextCount(), 1);
+    assert.equal(context.activeSources.length, 1);
+    window.dispatchEvent(new Event("beforeunload"));
+    assert.equal(context.activeSources.length, 0);
+  });
+}
+
 test("interacting with sound disabled does not create an AudioContext", async (t) => {
   const { window, getContextCount } = createAppEnvironment(t, null);
   await import("../js/main.js?sound-disabled");

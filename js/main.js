@@ -24,7 +24,12 @@ function getSharedAudioContext() {
   if (!AudioContextClass) {
     return null;
   }
-  sharedAudioContext = new AudioContextClass();
+  try {
+    sharedAudioContext = new AudioContextClass();
+  } catch {
+    // Audio is optional; browsers can reject construction at their context limit.
+    return null;
+  }
   sharedAudioContext.addEventListener("statechange", () => renderAudio(state));
   return sharedAudioContext;
 }
