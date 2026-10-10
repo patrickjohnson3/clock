@@ -17,6 +17,10 @@ export function createSoundManager(enginesByKey) {
     }
   }
 
+  function hasEnabledSounds(state) {
+    return entries.some(([stateKey]) => state[stateKey]);
+  }
+
   function stopAll() {
     for (const [, engine] of entries) {
       engine.stop();
@@ -26,6 +30,7 @@ export function createSoundManager(enginesByKey) {
   return {
     setGlobalVolume,
     sync,
+    hasEnabledSounds,
     stopAll,
   };
 }

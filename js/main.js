@@ -38,17 +38,24 @@ function getSharedAudioContext() {
     return null;
   }
   sharedAudioContext = new AudioContextClass();
+  sharedAudioContext.addEventListener("statechange", syncSharedAudioContext);
   return sharedAudioContext;
 }
 
-function resumeSharedAudioContext() {
-  if (sharedAudioContext?.state === "suspended") {
+function syncSharedAudioContext() {
+  if (!sharedAudioContext) {
+    return;
+  }
+  const soundsEnabled = soundManager.hasEnabledSounds(state);
+  if (soundsEnabled && sharedAudioContext.state === "suspended") {
     sharedAudioContext.resume().catch(() => {});
+  } else if (!soundsEnabled && sharedAudioContext.state === "running") {
+    sharedAudioContext.suspend().catch(() => {});
   }
 }
 
-window.addEventListener("pointerup", resumeSharedAudioContext);
-window.addEventListener("keydown", resumeSharedAudioContext);
+window.addEventListener("pointerup", syncSharedAudioContext);
+window.addEventListener("keydown", syncSharedAudioContext);
 
 const matrix = createMatrix({
   canvas: ui.refs.canvas,
@@ -120,6 +127,7 @@ function renderAudio(nextState) {
   );
   soundManager.setGlobalVolume(globalSoundVolume);
   soundManager.sync(nextState);
+  syncSharedAudioContext();
 }
 
 function renderClock(nextState) {

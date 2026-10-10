@@ -51,33 +51,42 @@ export function createAudioContext() {
     return source;
   }
 
-  return {
-    state: "running",
-    allowResume: false,
-    resume() {
-      if (!this.allowResume) {
-        return Promise.reject(new Error("User interaction required"));
-      }
-      this.state = "running";
-      return Promise.resolve();
-    },
-    sampleRate: 100,
-    currentTime: 0,
-    destination: {},
-    createGain: node,
-    createBiquadFilter: node,
-    createBuffer: (_channels, length) => ({
-      getChannelData: () => new Float32Array(length),
+  return Object.defineProperties(
+    new EventTarget(),
+    Object.getOwnPropertyDescriptors({
+      state: "running",
+      allowResume: false,
+      resume() {
+        if (!this.allowResume) {
+          return Promise.reject(new Error("User interaction required"));
+        }
+        this.state = "running";
+        this.dispatchEvent(new Event("statechange"));
+        return Promise.resolve();
+      },
+      suspend() {
+        this.state = "suspended";
+        this.dispatchEvent(new Event("statechange"));
+        return Promise.resolve();
+      },
+      sampleRate: 100,
+      currentTime: 0,
+      destination: {},
+      createGain: node,
+      createBiquadFilter: node,
+      createBuffer: (_channels, length) => ({
+        getChannelData: () => new Float32Array(length),
+      }),
+      createBufferSource: createSource,
+      createOscillator: createSource,
+      get activeSources() {
+        return sources.filter((source) => source.active);
+      },
+      finishStoppedSources() {
+        for (const finish of ended.splice(0)) {
+          finish();
+        }
+      },
     }),
-    createBufferSource: createSource,
-    createOscillator: createSource,
-    get activeSources() {
-      return sources.filter((source) => source.active);
-    },
-    finishStoppedSources() {
-      for (const finish of ended.splice(0)) {
-        finish();
-      }
-    },
-  };
+  );
 }

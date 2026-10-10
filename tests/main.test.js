@@ -17,11 +17,21 @@ function createAppEnvironment(t, savedSettings) {
     contextCount += 1;
     return context;
   };
-  const fontSelect = new EventTarget();
+  const controls = new Map(
+    [
+      "fontSelect",
+      "brownNoiseToggle",
+      "pinkNoiseToggle",
+      "rainStormToggle",
+      "aircraftCabinToggle",
+      "dubTechnoToggle",
+      "soundVolumeSlider",
+    ].map((id) => [id, new EventTarget()]),
+  );
   const stylesheets = [];
   const document = Object.assign(new EventTarget(), {
     hidden: false,
-    getElementById: (id) => (id === "fontSelect" ? fontSelect : null),
+    getElementById: (id) => controls.get(id) ?? null,
     createElement: (tagName) => ({ tagName }),
     head: { appendChild: (element) => stylesheets.push(element) },
     body: { classList: { toggle() {} }, style: {} },
@@ -42,6 +52,11 @@ function createAppEnvironment(t, savedSettings) {
     document,
     stylesheets,
     getContextCount: () => contextCount,
+    setToggle(key, checked) {
+      const toggle = controls.get(`${key}Toggle`);
+      toggle.checked = checked;
+      toggle.dispatchEvent(new Event("change"));
+    },
   };
 }
 
@@ -98,4 +113,78 @@ test("interacting with sound disabled does not create an AudioContext", async (t
   window.dispatchEvent(new Event("pointerup"));
   window.dispatchEvent(new Event("keydown"));
   assert.equal(getContextCount(), 0);
+});
+
+test("turning all sounds off suspends audio until a sound is enabled again", async (t) => {
+  const { context, document, window, getContextCount, setToggle } =
+    createAppEnvironment(t, null);
+  await import("../js/main.js?idle-audio");
+  context.allowResume = true;
+  setToggle("brownNoise", true);
+  setToggle("pinkNoise", true);
+  assert.equal(context.state, "running");
+  assert.equal(context.activeSources.length, 2);
+
+  setToggle("brownNoise", false);
+  assert.equal(context.state, "running");
+  assert.equal(context.activeSources.length, 1);
+  setToggle("pinkNoise", false);
+  assert.equal(context.state, "suspended");
+  assert.equal(context.activeSources.length, 0);
+
+  window.dispatchEvent(new Event("pointerup"));
+  window.dispatchEvent(new Event("keydown"));
+  assert.equal(context.state, "suspended");
+
+  setToggle("brownNoise", true);
+  assert.equal(context.state, "running");
+  assert.equal(context.activeSources.length, 1);
+  assert.equal(getContextCount(), 1);
+  const volume = document.getElementById("soundVolumeSlider");
+  volume.value = "0";
+  volume.dispatchEvent(new Event("input"));
+  assert.equal(context.state, "running");
+  assert.equal(context.activeSources.length, 1);
+});
+
+test("audio recovers when a sound is enabled during a pending suspension", async (t) => {
+  const { context, setToggle } = createAppEnvironment(t, null);
+  await import("../js/main.js?pending-suspension");
+  context.allowResume = true;
+  setToggle("brownNoise", true);
+  let finishSuspension;
+  context.suspend = () =>
+    new Promise((resolve) => {
+      finishSuspension = () => {
+        context.state = "suspended";
+        context.dispatchEvent(new Event("statechange"));
+        resolve();
+      };
+    });
+
+  setToggle("brownNoise", false);
+  assert.equal(typeof finishSuspension, "function");
+  setToggle("brownNoise", true);
+  finishSuspension();
+  assert.equal(context.state, "running");
+  assert.equal(context.activeSources.length, 1);
+});
+
+test("a late resume cannot leave audio running after all sounds are disabled", async (t) => {
+  const { context, setToggle } = createAppEnvironment(t, null);
+  await import("../js/main.js?pending-resume");
+  let finishResume;
+  context.resume = () =>
+    new Promise((resolve) => {
+      finishResume = () => {
+        context.state = "running";
+        context.dispatchEvent(new Event("statechange"));
+        resolve();
+      };
+    });
+  setToggle("brownNoise", true);
+  setToggle("brownNoise", false);
+  finishResume();
+  assert.equal(context.state, "suspended");
+  assert.equal(context.activeSources.length, 0);
 });
