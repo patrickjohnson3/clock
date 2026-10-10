@@ -673,12 +673,6 @@ export function createDubTechnoEngine(config, { getContext } = {}) {
     lfoDepth.gain.value = config.lfoDepth;
     lfoDepth.connect(padFilter.frequency);
 
-    lfo = audioContext.createOscillator();
-    lfo.type = "sine";
-    lfo.frequency.value = config.lfoFrequency;
-    lfo.connect(lfoDepth);
-    lfo.start();
-
     const length = Math.floor(audioContext.sampleRate * 2);
     noiseBuffer = audioContext.createBuffer(1, length, audioContext.sampleRate);
     const channel = noiseBuffer.getChannelData(0);
@@ -808,6 +802,13 @@ export function createDubTechnoEngine(config, { getContext } = {}) {
       context.resume().catch(() => {});
     }
 
+    if (!lfo) {
+      lfo = context.createOscillator();
+      lfo.type = "sine";
+      lfo.frequency.value = config.lfoFrequency;
+      lfo.connect(lfoDepth);
+      lfo.start();
+    }
     if (!padOscA) {
       padOscA = createPadOsc(82.41, -6);
     }
@@ -826,6 +827,11 @@ export function createDubTechnoEngine(config, { getContext } = {}) {
     document.removeEventListener("visibilitychange", handleVisibilityChange);
     stopScheduler();
 
+    if (lfo) {
+      lfo.stop();
+      lfo.disconnect();
+      lfo = null;
+    }
     if (padOscA) {
       padOscA.stop();
       padOscA.disconnect();

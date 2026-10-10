@@ -31,10 +31,25 @@ export function createAudioContext() {
   const node = () => ({
     gain: parameter(),
     frequency: parameter(),
+    detune: parameter(),
     Q: parameter(),
     connect() {},
     disconnect() {},
   });
+  function createSource() {
+    const source = Object.assign(new EventTarget(), node(), {
+      active: false,
+      start() {
+        this.active = true;
+      },
+      stop() {
+        this.active = false;
+        ended.push(() => this.dispatchEvent(new Event("ended")));
+      },
+    });
+    sources.push(source);
+    return source;
+  }
 
   return {
     state: "running",
@@ -54,20 +69,8 @@ export function createAudioContext() {
     createBuffer: (_channels, length) => ({
       getChannelData: () => new Float32Array(length),
     }),
-    createBufferSource() {
-      const source = Object.assign(new EventTarget(), node(), {
-        active: false,
-        start() {
-          this.active = true;
-        },
-        stop() {
-          this.active = false;
-          ended.push(() => this.dispatchEvent(new Event("ended")));
-        },
-      });
-      sources.push(source);
-      return source;
-    },
+    createBufferSource: createSource,
+    createOscillator: createSource,
     get activeSources() {
       return sources.filter((source) => source.active);
     },

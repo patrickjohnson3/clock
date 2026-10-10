@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   createAircraftCabinEngine,
   createBrownNoiseEngine,
+  createDubTechnoEngine,
   createPinkNoiseEngine,
   createRainStormEngine,
 } from "../js/audio/engines.js";
@@ -43,3 +44,27 @@ for (const [key, createEngine] of Object.entries(factories)) {
     assert.equal(context.activeSources.length, 0);
   });
 }
+
+test("Dub Techno stops every oscillator and can restart without duplicates", (t) => {
+  installGlobals(t, {
+    window: createWindow(),
+    document: Object.assign(new EventTarget(), { hidden: false }),
+  });
+  const context = createAudioContext();
+  const engine = createDubTechnoEngine(TUNING.audio.dubTechno, {
+    getContext: () => context,
+  });
+
+  engine.stop();
+  for (let cycle = 0; cycle < 2; cycle += 1) {
+    engine.start();
+    const playingSources = [...context.activeSources];
+    assert.ok(playingSources.length > 0);
+    engine.start();
+    assert.deepEqual(context.activeSources, playingSources);
+    engine.stop();
+    engine.stop();
+    context.finishStoppedSources();
+    assert.equal(context.activeSources.length, 0);
+  }
+});
