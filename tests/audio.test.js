@@ -22,6 +22,42 @@ const factories = {
   aircraftCabin: createAircraftCabinEngine,
 };
 
+// Evaluate only the target/step automation used by the ducking gain.
+function targetValueAtTime(events, initialValue, time) {
+  let timeline = [];
+  for (const { method, args } of events) {
+    if (method === "cancelScheduledValues") {
+      timeline = timeline.filter((event) => event.args[1] < args[0]);
+    } else {
+      assert.ok(method === "setTargetAtTime" || method === "setValueAtTime");
+      timeline.push({ method, args });
+    }
+  }
+  timeline.sort((a, b) => a.args[1] - b.args[1]);
+  let value = initialValue;
+  let previousTime = 0;
+  let target = null;
+  let timeConstant = 1;
+  function valueAfter(seconds) {
+    return target === null
+      ? value
+      : target + (value - target) * Math.exp(-seconds / timeConstant);
+  }
+  for (const { method, args } of timeline) {
+    if (args[1] > time) break;
+    value = valueAfter(args[1] - previousTime);
+    previousTime = args[1];
+    if (method === "setValueAtTime") {
+      value = args[0];
+      target = null;
+    } else {
+      target = args[0];
+      timeConstant = args[2];
+    }
+  }
+  return valueAfter(time - previousTime);
+}
+
 for (const [key, createEngine] of Object.entries({
   ...factories,
   dubTechno: createDubTechnoEngine,
@@ -158,6 +194,49 @@ test("Dub Techno schedules percussion ahead and cancels its scheduler on stop", 
   assert.equal(context.sources.length, sourceCount);
   assert.equal(context.activeSources.length, 0);
   assert.equal(window.pendingTimerCount, 0);
+});
+
+test("Dub Techno ducking continues its recovery into the next kick without a gain step", (t) => {
+  const context = createAudioContext();
+  const window = createWindow({
+    onAdvance: (milliseconds) => context.advanceTime(milliseconds / 1000),
+  });
+  installGlobals(t, {
+    window,
+    document: Object.assign(new EventTarget(), { hidden: false }),
+  });
+  const engine = createDubTechnoEngine(TUNING.audio.dubTechno, {
+    getContext: () => context,
+  });
+  engine.start();
+  window.advanceTime(50);
+  const duck = context.nodes
+    .map((node) => node.gain)
+    .find((gain) =>
+      gain.events.some(
+        ({ method, args }) => method === "setTargetAtTime" && args[0] === 0.62,
+      ),
+    );
+  assert.ok(duck);
+  const initialValue = duck.value;
+  Object.defineProperty(duck, "value", {
+    get: () =>
+      targetValueAtTime(duck.events, initialValue, context.currentTime),
+  });
+  window.advanceTime(400);
+
+  // Independent solutions of the exponential attack/release at 108 BPM.
+  for (const [time, expected] of [
+    [0.05, 1],
+    [0.065, 0.7597941876451481],
+    [0.23, 0.6200023348006942],
+    [0.6055555555555556, 0.9418871197282963],
+    [0.6255555555555556, 0.7048485235566931],
+  ]) {
+    const actual = targetValueAtTime(duck.events, initialValue, time);
+    assert.ok(Math.abs(actual - expected) < 1e-9, `${time}: ${actual}`);
+  }
+  engine.stop();
 });
 
 test("Dub Techno pauses scheduling while hidden and returns without a catch-up burst", (t) => {

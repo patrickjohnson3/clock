@@ -675,7 +675,6 @@ export function createDubTechnoEngine(config, { getContext }) {
     startPercussionVoice(osc, kickFilter, gain, time, 0.28);
 
     duckGain.gain.cancelScheduledValues(time);
-    duckGain.gain.setValueAtTime(duckGain.gain.value, time);
     duckGain.gain.setTargetAtTime(0.62, time, 0.015);
     duckGain.gain.setTargetAtTime(1, time + 0.18, 0.2);
   }
