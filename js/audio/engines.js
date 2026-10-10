@@ -715,7 +715,13 @@ export function createDubTechnoEngine(config, { getContext }) {
     }
 
     const stepDuration = 60 / config.bpm / 2;
-    while (nextStepTime < audioContext.currentTime + config.scheduleAheadTime) {
+    const now = audioContext.currentTime;
+    if (nextStepTime < now) {
+      const missedSteps = Math.ceil((now - nextStepTime) / stepDuration);
+      stepIndex += missedSteps;
+      nextStepTime += missedSteps * stepDuration;
+    }
+    while (nextStepTime < now + config.scheduleAheadTime) {
       if (stepIndex % 2 === 0) {
         scheduleKick(nextStepTime);
       }
@@ -732,6 +738,7 @@ export function createDubTechnoEngine(config, { getContext }) {
       return;
     }
     nextStepTime = audioContext.currentTime + 0.05;
+    schedule();
     schedulerId = window.setInterval(schedule, config.lookaheadMs);
   }
 

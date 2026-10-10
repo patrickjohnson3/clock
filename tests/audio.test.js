@@ -251,6 +251,76 @@ test("Dub Techno schedules percussion ahead and cancels its scheduler on stop", 
   assert.equal(window.pendingTimerCount, 0);
 });
 
+test("Dub Techno queues the first kick before a delayed timer callback", (t) => {
+  t.mock.method(Math, "random", () => 0.5);
+  const context = createAudioContext();
+  const window = createWindow();
+  installGlobals(t, {
+    window,
+    document: Object.assign(new EventTarget(), { hidden: false }),
+  });
+  const engine = createDubTechnoEngine(TUNING.audio.dubTechno, {
+    getContext: () => context,
+  });
+  engine.start();
+  context.advanceTime(0.06);
+  window.advanceTime(50);
+  const percussion = context.sources.filter(
+    (source) => source.stopTime !== null,
+  );
+  assert.equal(percussion.length, 1);
+  assert.equal(percussion[0].startTime, 0.05);
+  assert.equal(percussion[0].scheduledAt, 0);
+  engine.stop();
+});
+
+test("Dub Techno skips expired steps after delayed callbacks while preserving the beat grid", (t) => {
+  t.mock.method(Math, "random", () => 0.5);
+  const context = createAudioContext();
+  const window = createWindow();
+  installGlobals(t, {
+    window,
+    document: Object.assign(new EventTarget(), { hidden: false }),
+  });
+  const engine = createDubTechnoEngine(TUNING.audio.dubTechno, {
+    getContext: () => context,
+  });
+  engine.start();
+  context.advanceTime(0.05);
+  window.advanceTime(50);
+  context.advanceTime(0.2);
+  window.advanceTime(50);
+
+  // At 108 BPM, steps are 5/18 s apart, anchored at 0.05 s.
+  for (const [now, expectedTime, kind] of [
+    [0.25, null],
+    [0.25, null],
+    [0.5, 0.6055555555555556, "kick"],
+    [0.8833333333333334, 0.8833333333333334, "hat"],
+    [1.2, null],
+    [1.3, 1.4388888888888889, "hat"],
+    [5.2, 5.3277777777777775, "hat"],
+    [3600.2, 3600.3277777777776, "hat"],
+    [3600.5, 3600.6055555555554, "kick"],
+  ]) {
+    const sourceCount = context.sources.length;
+    context.advanceTime(now);
+    // Deliver one callback, not every timer tick during the audio-clock gap.
+    window.advanceTime(50);
+    const created = context.sources.slice(sourceCount);
+    assert.equal(created.length, expectedTime === null ? 0 : 1, `${now} s`);
+    if (expectedTime !== null) {
+      const [source] = created;
+      assert.ok(Math.abs(source.startTime - expectedTime) < 1e-9);
+      assert.ok(source.startTime >= now);
+      assert.ok(source.startTime < now + 0.2);
+      assert.equal(Boolean(source.buffer), kind === "hat");
+    }
+  }
+  engine.stop();
+  assert.equal(window.pendingTimerCount, 0);
+});
+
 test("Dub Techno ducking continues its recovery into the next kick without a gain step", (t) => {
   const context = createAudioContext();
   const window = createWindow({
