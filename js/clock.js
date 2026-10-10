@@ -1,8 +1,15 @@
 export function createClock({ container, chars, tuning }) {
   const spans = [];
   const formatterByHourMode = new Map();
+  let formatterTimeZone = null;
 
   function getFormatter(hour24, leadingZero, hideSeconds) {
+    // Intl formatters retain their zone even if the device's local zone changes.
+    const timeZone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (timeZone !== formatterTimeZone) {
+      formatterByHourMode.clear();
+      formatterTimeZone = timeZone;
+    }
     const key = [
       hour24 ? "24" : "12",
       leadingZero ? "leading-zero" : "no-leading-zero",
@@ -15,6 +22,7 @@ export function createClock({ container, chars, tuning }) {
       hour: leadingZero ? "2-digit" : "numeric",
       minute: "2-digit",
       hour12: !hour24,
+      timeZone,
     };
 
     if (!hideSeconds) {
