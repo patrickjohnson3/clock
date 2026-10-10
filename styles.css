@@ -226,7 +226,7 @@ body.glow-on #clock::before {
   min-width: 0;
 }
 
-.controls-section strong:first-child {
+.controls-section h2:first-child {
   text-align: center;
   font-size: 1.04rem;
   letter-spacing: 0.04em;
@@ -244,8 +244,8 @@ label {
   line-height: 1.35;
 }
 
-strong {
-  display: block;
+.controls-section h2 {
+  font-size: inherit;
   margin: 0.35rem 0 0.45rem;
 }
 
@@ -473,7 +473,7 @@ body.light-mode #controls option:hover {
     margin-top: 0.1rem;
   }
 
-  .controls-section strong:first-child {
+  .controls-section h2:first-child {
     text-align: left;
   }
 
