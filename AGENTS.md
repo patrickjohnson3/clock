@@ -34,6 +34,8 @@ product documentation and the module map.
   engines by state key. Preserve the `start`, `stop`, `setVolume` interface and the
   shared AudioContext supplied by `js/main.js`. Engines must not read controls or
   stored settings directly.
+- `tests/` holds Node regression tests; `tests/helpers/` provides browser/audio
+  fakes. Test observable lifecycle behavior, including asynchronous source events.
 - When adding a setting, review all of `DEFAULTS`, `normalizeState`, settings
   loading, HTML controls, UI synchronization, and main event/render wiring.
   Existing control IDs usually follow `<stateKey>Toggle`; retain explicit mappings
@@ -83,15 +85,16 @@ product documentation and the module map.
 - Serve the repository with `python3 -m http.server 8000` and open
   `http://localhost:8000` for browser validation. Use HTTP serving for the ES module
   entrypoint; the README's direct-file option is not a reliable module smoke test.
-- Run `npm run lint` and `npm run format:check` before completing a change; these
-  are the checks in `.github/workflows/quality.yml`. Documentation-only changes
+- Run `npm test`, `npm run lint`, and `npm run format:check` before completing a
+  change; these are the checks in `.github/workflows/quality.yml`. Documentation-only changes
   still need the format check. ESLint uses `eslint.config.js`; formatting uses
   Prettier defaults and `.prettierignore`.
 - `npm run lint:fix` and `npm run format` are available, but rewrite files across
   the repository. Review their diff and avoid unrelated formatting changes.
-- There is no automated test suite, test script, type-check, build, or packaging
-  command. Do not report linting as functional testing. For behavior changes,
-  exercise the affected browser flows and report what was checked or unavailable.
+- `npm test` uses Node's built-in test runner. Add regression coverage for audio
+  lifecycle changes. There is no type-check, build, or packaging command. Node
+  fakes do not verify browser policy, focus, CSS, or physical device APIs; exercise
+  affected browser flows and report what was checked or unavailable.
 - For clock/state/settings changes, check fresh defaults, 12/24-hour formatting,
   seconds/leading-zero/AM-PM combinations, mode normalization, and reloads with
   persistence on/off. Include legacy, malformed, or unavailable storage when

@@ -60,11 +60,14 @@ Use `Hide Panel` to collapse the panel. Use the subtle top handle to reopen it.
 - `js/audio/engines.js` - individual sound engines
 - `js/audio/manager.js` - shared sound engine orchestration
 
-## Linting and Formatting
+## Tests, Linting, and Formatting
+
+Regression tests use Node's built-in test runner and require no extra dependencies.
 
 Scripts from `package.json`:
 
 ```bash
+npm test
 npm run lint
 npm run lint:fix
 npm run format

@@ -67,9 +67,6 @@ export function createBrownNoiseEngine(config, { getContext } = {}) {
     sourceNode.loop = true;
     sourceNode.connect(gainNode);
     sourceNode.start();
-    sourceNode.addEventListener("ended", () => {
-      sourceNode = null;
-    });
   }
 
   function stop() {
@@ -172,9 +169,6 @@ export function createPinkNoiseEngine(config, { getContext } = {}) {
     sourceNode.connect(highShelfNode);
     highShelfNode.connect(gainNode);
     sourceNode.start();
-    sourceNode.addEventListener("ended", () => {
-      sourceNode = null;
-    });
   }
 
   function stop() {
@@ -365,13 +359,6 @@ export function createRainStormEngine(config, { getContext } = {}) {
     bodySource.start();
     textureSource.start();
     startVariation();
-
-    bodySource.addEventListener("ended", () => {
-      bodySource = null;
-    });
-    textureSource.addEventListener("ended", () => {
-      textureSource = null;
-    });
   }
 
   function stop() {
@@ -578,16 +565,6 @@ export function createAircraftCabinEngine(config, { getContext } = {}) {
     hissSource.start();
     rumbleSource.start();
     startMovement();
-
-    bodySource.addEventListener("ended", () => {
-      bodySource = null;
-    });
-    hissSource.addEventListener("ended", () => {
-      hissSource = null;
-    });
-    rumbleSource.addEventListener("ended", () => {
-      rumbleSource = null;
-    });
   }
 
   function stop() {
