@@ -86,5 +86,7 @@ Configuration:
 ## Notes
 
 - Audio starts after user interaction due to browser autoplay policies.
+- Saved sounds wait for playback permission before generating audio buffers or
+  starting their scheduler.
 - Google Fonts are requested only when a custom font is selected or restored;
   the System font does not require a network request.

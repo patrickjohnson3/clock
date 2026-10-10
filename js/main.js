@@ -38,7 +38,7 @@ function getSharedAudioContext() {
     return null;
   }
   sharedAudioContext = new AudioContextClass();
-  sharedAudioContext.addEventListener("statechange", syncSharedAudioContext);
+  sharedAudioContext.addEventListener("statechange", () => renderAudio(state));
   return sharedAudioContext;
 }
 
@@ -126,7 +126,11 @@ function renderAudio(nextState) {
     Math.min(1, nextState.soundVolume / 100),
   );
   soundManager.setGlobalVolume(globalSoundVolume);
-  soundManager.sync(nextState);
+  if (soundManager.hasEnabledSounds(nextState)) {
+    getSharedAudioContext();
+  }
+  // Autoplay may block resume; wait before generating buffers or starting timers.
+  soundManager.sync(nextState, sharedAudioContext?.state === "running");
   syncSharedAudioContext();
 }
 

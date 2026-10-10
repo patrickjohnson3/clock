@@ -88,23 +88,82 @@ test("a restored custom font requests the optional stylesheet", async (t) => {
   assert.equal(document.body.style.fontFamily, font);
 });
 
-test("restored audio resumes on pointer or keyboard interaction without restarting sources", async (t) => {
+test("restored audio waits for playback permission and resumes without restarting sources", async (t) => {
   const { context, window, getContextCount } = createAppEnvironment(t, {
     brownNoise: true,
   });
   await import("../js/main.js?restored-audio");
   assert.equal(context.state, "suspended");
-  const playingSources = [...context.activeSources];
-  assert.ok(playingSources.length > 0);
+  assert.equal(context.activeSources.length, 0);
+  assert.equal(context.bufferCount, 0);
 
   context.allowResume = true;
+  let playingSources;
   for (const event of ["pointerup", "keydown"]) {
     context.state = "suspended";
     window.dispatchEvent(new Event(event));
     assert.equal(context.state, "running");
+    assert.equal(context.activeSources.length, 1);
+    assert.equal(context.bufferCount, 1);
+    playingSources ??= [...context.activeSources];
     assert.deepEqual(context.activeSources, playingSources);
   }
   assert.equal(getContextCount(), 1);
+});
+
+test("all restored sounds remain uninitialized while autoplay is blocked", async (t) => {
+  const { context, window, setToggle, getContextCount } = createAppEnvironment(
+    t,
+    {
+      brownNoise: true,
+      pinkNoise: true,
+      rainStorm: true,
+      aircraftCabin: true,
+      dubTechno: true,
+    },
+  );
+  await import("../js/main.js?blocked-mixed-audio");
+  for (const event of ["pointerup", "keydown"]) {
+    window.dispatchEvent(new Event(event));
+    assert.equal(context.state, "suspended");
+    assert.equal(context.activeSources.length, 0);
+    assert.equal(context.bufferCount, 0);
+  }
+
+  setToggle("brownNoise", false);
+  context.allowResume = true;
+  window.dispatchEvent(new Event("pointerup"));
+  assert.equal(context.state, "running");
+  assert.ok(context.activeSources.length > 0);
+  assert.equal(context.bufferCount, 7);
+  const playingSources = [...context.activeSources];
+  window.dispatchEvent(new Event("keydown"));
+  assert.deepEqual(context.activeSources, playingSources);
+  assert.equal(context.bufferCount, 7);
+  assert.equal(getContextCount(), 1);
+});
+
+test("restored sounds start immediately when playback is already permitted", async (t) => {
+  const { context } = createAppEnvironment(t, { brownNoise: true });
+  context.state = "running";
+  await import("../js/main.js?permitted-audio");
+  assert.equal(context.activeSources.length, 1);
+  assert.equal(context.bufferCount, 1);
+  const playingSources = [...context.activeSources];
+  context.dispatchEvent(new Event("statechange"));
+  assert.deepEqual(context.activeSources, playingSources);
+  assert.equal(context.bufferCount, 1);
+});
+
+test("saved sounds do not prevent startup when Web Audio is unavailable", async (t) => {
+  const { window, getContextCount } = createAppEnvironment(t, {
+    brownNoise: true,
+  });
+  delete window.AudioContext;
+  await import("../js/main.js?unsupported-audio");
+  window.dispatchEvent(new Event("pointerup"));
+  assert.equal(window.matrixClock.getState().brownNoise, true);
+  assert.equal(getContextCount(), 0);
 });
 
 test("interacting with sound disabled does not create an AudioContext", async (t) => {

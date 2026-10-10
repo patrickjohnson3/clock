@@ -27,6 +27,7 @@ export function createWindow() {
 export function createAudioContext() {
   const sources = [];
   const ended = [];
+  let bufferCount = 0;
   const parameter = () => ({ value: 0, setTargetAtTime() {} });
   const node = () => ({
     gain: parameter(),
@@ -74,13 +75,17 @@ export function createAudioContext() {
       destination: {},
       createGain: node,
       createBiquadFilter: node,
-      createBuffer: (_channels, length) => ({
-        getChannelData: () => new Float32Array(length),
-      }),
+      createBuffer(_channels, length) {
+        bufferCount += 1;
+        return { getChannelData: () => new Float32Array(length) };
+      },
       createBufferSource: createSource,
       createOscillator: createSource,
       get activeSources() {
         return sources.filter((source) => source.active);
+      },
+      get bufferCount() {
+        return bufferCount;
       },
       finishStoppedSources() {
         for (const finish of ended.splice(0)) {

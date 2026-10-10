@@ -7,10 +7,12 @@ export function createSoundManager(enginesByKey) {
     }
   }
 
-  function sync(state) {
+  function sync(state, canStart = true) {
     for (const [stateKey, engine] of entries) {
       if (state[stateKey]) {
-        engine.start();
+        if (canStart) {
+          engine.start();
+        }
       } else {
         engine.stop();
       }
