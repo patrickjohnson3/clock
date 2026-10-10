@@ -106,7 +106,13 @@ export function createUI(defaults) {
       if (!refs.controls) {
         return;
       }
+      refs.controls.inert = collapsed;
       refs.controls.classList.toggle("collapsed", collapsed);
+      if (refs.panelTab) {
+        refs.panelTab.inert = !collapsed;
+      }
+      const focusTarget = collapsed ? refs.panelTab : refs.collapseBtn;
+      focusTarget?.focus({ preventScroll: true });
       window.requestAnimationFrame(updateScrollHint);
     }
 
