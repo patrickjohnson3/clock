@@ -86,4 +86,5 @@ Configuration:
 ## Notes
 
 - Audio starts after user interaction due to browser autoplay policies.
-- Fonts are loaded from Google Fonts in `index.html`.
+- Google Fonts are requested only when a custom font is selected or restored;
+  the System font does not require a network request.

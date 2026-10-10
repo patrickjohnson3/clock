@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { STORAGE_ENABLED_KEY, STORAGE_KEY } from "../js/config.js";
+import { STORAGE_ENABLED_KEY, STORAGE_KEY, SYSTEM_FONT } from "../js/config.js";
 import {
   createAudioContext,
   createWindow,
@@ -17,9 +17,13 @@ function createAppEnvironment(t, savedSettings) {
     contextCount += 1;
     return context;
   };
+  const fontSelect = new EventTarget();
+  const stylesheets = [];
   const document = Object.assign(new EventTarget(), {
     hidden: false,
-    getElementById: () => null,
+    getElementById: (id) => (id === "fontSelect" ? fontSelect : null),
+    createElement: (tagName) => ({ tagName }),
+    head: { appendChild: (element) => stylesheets.push(element) },
     body: { classList: { toggle() {} }, style: {} },
   });
   const saved = new Map([
@@ -32,8 +36,42 @@ function createAppEnvironment(t, savedSettings) {
     navigator: {},
     localStorage: { getItem: (key) => saved.get(key) ?? null },
   });
-  return { context, window, getContextCount: () => contextCount };
+  return {
+    context,
+    window,
+    document,
+    stylesheets,
+    getContextCount: () => contextCount,
+  };
 }
+
+test("optional fonts load once when a custom font is selected, not for System", async (t) => {
+  const { document, stylesheets } = createAppEnvironment(t, null);
+  await import("../js/main.js?optional-fonts");
+  assert.equal(stylesheets.length, 0);
+
+  const select = document.getElementById("fontSelect");
+  for (const font of [
+    "'Fira Mono', monospace",
+    SYSTEM_FONT,
+    "'Space Mono', monospace",
+  ]) {
+    select.value = font;
+    select.dispatchEvent(new Event("change"));
+    assert.equal(document.body.style.fontFamily, font);
+    assert.equal(stylesheets.length, 1);
+  }
+  assert.equal(stylesheets[0].rel, "stylesheet");
+  assert.equal(new URL(stylesheets[0].href).hostname, "fonts.googleapis.com");
+});
+
+test("a restored custom font requests the optional stylesheet", async (t) => {
+  const font = "'JetBrains Mono', monospace";
+  const { document, stylesheets } = createAppEnvironment(t, { font });
+  await import("../js/main.js?restored-font");
+  assert.equal(stylesheets.length, 1);
+  assert.equal(document.body.style.fontFamily, font);
+});
 
 test("restored audio resumes on pointer or keyboard interaction without restarting sources", async (t) => {
   const { context, window, getContextCount } = createAppEnvironment(t, {

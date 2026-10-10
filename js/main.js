@@ -4,6 +4,7 @@ import {
   DEFAULTS,
   STORAGE_ENABLED_KEY,
   STORAGE_KEY,
+  SYSTEM_FONT,
   TUNING,
 } from "./config.js";
 import {
@@ -84,10 +85,19 @@ let saveTimerId = null;
 let clockTimerId = null;
 let wakeLockSentinel = null;
 let wakeLockRequest = null;
+let webFontsRequested = false;
 ui.setControlsFromState(state);
 ui.updateScrollHint();
 
 function renderVisuals(nextState) {
+  if (nextState.font !== SYSTEM_FONT && !webFontsRequested) {
+    const stylesheet = document.createElement("link");
+    stylesheet.rel = "stylesheet";
+    stylesheet.href =
+      "https://fonts.googleapis.com/css2?family=Space+Mono:wght@700&family=IBM+Plex+Mono:wght@700&family=Roboto+Mono:wght@700&family=Source+Code+Pro:wght@700&family=JetBrains+Mono:wght@700&family=Fira+Mono:wght@700&display=swap";
+    document.head.appendChild(stylesheet);
+    webFontsRequested = true;
+  }
   document.body.classList.toggle("light-mode", nextState.lightMode);
   document.body.classList.toggle("matrix-mode", nextState.matrixMode);
   document.body.classList.toggle("glow-on", nextState.glow);
