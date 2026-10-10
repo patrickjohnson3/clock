@@ -16,43 +16,102 @@ export function installGlobals(t, values) {
   }
 }
 
-export function createWindow() {
+export function createWindow({ onAdvance = () => {} } = {}) {
   const window = new EventTarget();
+  const timers = new Map();
+  let now = 0;
   let nextTimer = 0;
-  window.setTimeout = window.setInterval = () => ++nextTimer;
-  window.clearTimeout = window.clearInterval = () => {};
+  function schedule(callback, delay, repeat) {
+    const id = ++nextTimer;
+    const interval = Math.max(1, Number(delay) || 0);
+    timers.set(id, { callback, due: now + interval, interval, repeat });
+    return id;
+  }
+  window.setTimeout = (callback, delay) => schedule(callback, delay, false);
+  window.setInterval = (callback, delay) => schedule(callback, delay, true);
+  window.clearTimeout = window.clearInterval = (id) => timers.delete(id);
+  window.advanceTime = (milliseconds) => {
+    const target = now + milliseconds;
+    while (timers.size) {
+      const [id, timer] = [...timers].sort((a, b) => a[1].due - b[1].due)[0];
+      if (timer.due > target) break;
+      now = timer.due;
+      onAdvance(now);
+      if (timer.repeat) timer.due += timer.interval;
+      else timers.delete(id);
+      timer.callback();
+    }
+    now = target;
+    onAdvance(now);
+  };
+  Object.defineProperty(window, "pendingTimerCount", {
+    get: () => timers.size,
+  });
   return window;
 }
 
 export function createAudioContext() {
   const sources = [];
+  const nodes = [];
   const ended = [];
   let bufferCount = 0;
-  const parameter = () => ({ value: 0, setTargetAtTime() {} });
-  const node = () => ({
-    gain: parameter(),
-    frequency: parameter(),
-    detune: parameter(),
-    Q: parameter(),
-    connect() {},
-    disconnect() {},
-  });
+  function parameter() {
+    const param = { value: 0, events: [] };
+    for (const method of [
+      "setValueAtTime",
+      "linearRampToValueAtTime",
+      "exponentialRampToValueAtTime",
+      "setTargetAtTime",
+      "cancelScheduledValues",
+    ]) {
+      param[method] = (...args) => param.events.push({ method, args });
+    }
+    return param;
+  }
+  function node() {
+    const result = {
+      gain: parameter(),
+      frequency: parameter(),
+      detune: parameter(),
+      Q: parameter(),
+      connect() {},
+      disconnect() {},
+    };
+    nodes.push(result);
+    return result;
+  }
   function createSource() {
     const source = Object.assign(new EventTarget(), node(), {
-      active: false,
-      start() {
-        this.active = true;
+      startTime: null,
+      stopTime: null,
+      ended: false,
+      start(time = context.currentTime) {
+        this.startTime = time;
+        this.scheduledAt = context.currentTime;
       },
-      stop() {
-        this.active = false;
-        ended.push(() => this.dispatchEvent(new Event("ended")));
+      stop(time = context.currentTime) {
+        this.stopTime = time;
+        queueEndedSources();
       },
     });
     sources.push(source);
     return source;
   }
 
-  return Object.defineProperties(
+  function queueEndedSources() {
+    for (const source of sources) {
+      if (
+        !source.ended &&
+        source.stopTime !== null &&
+        source.stopTime <= context.currentTime
+      ) {
+        source.ended = true;
+        ended.push(() => source.dispatchEvent(new Event("ended")));
+      }
+    }
+  }
+
+  const context = Object.defineProperties(
     new EventTarget(),
     Object.getOwnPropertyDescriptors({
       state: "running",
@@ -82,8 +141,15 @@ export function createAudioContext() {
       createBufferSource: createSource,
       createOscillator: createSource,
       get activeSources() {
-        return sources.filter((source) => source.active);
+        return sources.filter(
+          (source) =>
+            source.startTime !== null &&
+            source.startTime <= this.currentTime &&
+            (source.stopTime === null || source.stopTime > this.currentTime),
+        );
       },
+      sources,
+      nodes,
       get bufferCount() {
         return bufferCount;
       },
@@ -92,6 +158,11 @@ export function createAudioContext() {
           finish();
         }
       },
+      advanceTime(seconds) {
+        this.currentTime = seconds;
+        queueEndedSources();
+      },
     }),
   );
+  return context;
 }
