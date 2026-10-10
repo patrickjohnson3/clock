@@ -1,13 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { STORAGE_ENABLED_KEY, STORAGE_KEY, SYSTEM_FONT } from "../js/config.js";
+import {
+  DEFAULTS,
+  STORAGE_ENABLED_KEY,
+  STORAGE_KEY,
+  SYSTEM_FONT,
+} from "../js/config.js";
 import {
   createAudioContext,
   createWindow,
   installGlobals,
 } from "./helpers/audio.js";
 
-function createAppEnvironment(t, savedSettings) {
+function createAppEnvironment(t, savedSettings, { renderers = false } = {}) {
   const context = createAudioContext();
   context.state = "suspended";
   let contextCount = 0;
@@ -17,24 +22,88 @@ function createAppEnvironment(t, savedSettings) {
     contextCount += 1;
     return context;
   };
+  const calls = {
+    bodyClasses: 0,
+    styleReads: 0,
+    canvasClears: 0,
+    clockRenders: 0,
+    checkboxWrites: 0,
+  };
   const controls = new Map(
     [
       "fontSelect",
-      "brownNoiseToggle",
-      "pinkNoiseToggle",
-      "rainStormToggle",
-      "aircraftCabinToggle",
-      "dubTechnoToggle",
+      "modeSelect",
       "soundVolumeSlider",
+      "clockScaleSlider",
+      ...Object.keys(DEFAULTS)
+        .filter(
+          (key) =>
+            typeof DEFAULTS[key] === "boolean" &&
+            key !== "lightMode" &&
+            key !== "matrixMode",
+        )
+        .map((key) =>
+          key === "persistStorage" ? "storageToggle" : `${key}Toggle`,
+        ),
     ].map((id) => [id, new EventTarget()]),
   );
+  for (const control of controls.values()) {
+    let checked = false;
+    Object.defineProperty(control, "checked", {
+      get: () => checked,
+      set(value) {
+        checked = value;
+        calls.checkboxWrites += 1;
+      },
+    });
+  }
+  function createElement(tagName) {
+    return Object.assign(new EventTarget(), {
+      tagName,
+      dataset: {},
+      classList: { add() {}, remove() {} },
+      setAttribute() {},
+      removeAttribute() {},
+      remove() {},
+    });
+  }
+  if (renderers) {
+    window.innerWidth = 800;
+    window.innerHeight = 600;
+    controls.set("matrix", {
+      getContext: () => ({
+        clearRect() {
+          calls.canvasClears += 1;
+        },
+        fillRect() {},
+        save() {},
+        restore() {},
+        fillText() {},
+      }),
+    });
+    controls.set("clock", {
+      style: {
+        setProperty() {
+          calls.clockRenders += 1;
+        },
+      },
+      appendChild() {},
+    });
+  }
   const stylesheets = [];
   const document = Object.assign(new EventTarget(), {
     hidden: false,
     getElementById: (id) => controls.get(id) ?? null,
-    createElement: (tagName) => ({ tagName }),
+    createElement,
     head: { appendChild: (element) => stylesheets.push(element) },
-    body: { classList: { toggle() {} }, style: {} },
+    body: {
+      classList: {
+        toggle() {
+          calls.bodyClasses += 1;
+        },
+      },
+      style: {},
+    },
   });
   const saved = new Map([
     [STORAGE_ENABLED_KEY, JSON.stringify(Boolean(savedSettings))],
@@ -44,6 +113,10 @@ function createAppEnvironment(t, savedSettings) {
     window,
     document,
     navigator: {},
+    getComputedStyle: () => {
+      calls.styleReads += 1;
+      return { getPropertyValue: () => "" };
+    },
     localStorage: { getItem: (key) => saved.get(key) ?? null },
   });
   return {
@@ -51,6 +124,10 @@ function createAppEnvironment(t, savedSettings) {
     window,
     document,
     stylesheets,
+    calls,
+    resetCalls() {
+      for (const key in calls) calls[key] = 0;
+    },
     getContextCount: () => contextCount,
     setToggle(key, checked) {
       const toggle = controls.get(`${key}Toggle`);
@@ -257,4 +334,107 @@ test("a late resume cannot leave audio running after all sounds are disabled", a
   finishResume();
   assert.equal(context.state, "suspended");
   assert.equal(context.activeSources.length, 0);
+});
+
+test("volume and clock size changes do not reconcile unrelated renderers", async (t) => {
+  const { context, document, window, calls, resetCalls, setToggle } =
+    createAppEnvironment(t, null, { renderers: true });
+  let wakeRequests = 0;
+  navigator.wakeLock = {
+    request() {
+      wakeRequests += 1;
+      return Promise.reject(new Error("Denied"));
+    },
+  };
+  await import("../js/main.js?targeted-updates");
+  await Promise.resolve();
+  context.allowResume = true;
+  setToggle("brownNoise", true);
+  await Promise.resolve();
+  const requestsBefore = wakeRequests;
+  const playing = [...context.activeSources];
+  resetCalls();
+
+  const volume = document.getElementById("soundVolumeSlider");
+  volume.value = "50";
+  volume.dispatchEvent(new Event("input"));
+  assert.equal(window.matrixClock.getState().soundVolume, 50);
+  assert.equal(context.nodes[0].gain.value, 0.09);
+  assert.deepEqual(context.activeSources, playing);
+  assert.deepEqual(calls, {
+    bodyClasses: 0,
+    styleReads: 0,
+    canvasClears: 0,
+    clockRenders: 0,
+    checkboxWrites: 0,
+  });
+  assert.equal(wakeRequests, requestsBefore);
+
+  let gainWrites = 0;
+  const gain = context.nodes[0].gain;
+  const value = gain.value;
+  Object.defineProperty(gain, "value", {
+    get: () => value,
+    set() {
+      gainWrites += 1;
+    },
+  });
+  const size = document.getElementById("clockScaleSlider");
+  size.value = "150";
+  size.dispatchEvent(new Event("input"));
+  assert.equal(window.matrixClock.getState().clockScale, 150);
+  assert.equal(calls.clockRenders, 1);
+  assert.equal(calls.styleReads, 0);
+  assert.equal(calls.canvasClears, 0);
+  assert.equal(calls.bodyClasses, 0);
+  assert.equal(calls.checkboxWrites, 0);
+  assert.equal(gainWrites, 0);
+  assert.equal(wakeRequests, requestsBefore);
+});
+
+test("normalized Matrix mode updates visuals and repairs forced controls", async (t) => {
+  const { document, window, calls, resetCalls, setToggle } =
+    createAppEnvironment(t, null, { renderers: true });
+  await import("../js/main.js?normalized-updates");
+  const mode = document.getElementById("modeSelect");
+  mode.value = "matrix";
+  mode.dispatchEvent(new Event("change"));
+  assert.equal(window.matrixClock.getState().matrix, true);
+  assert.equal(window.matrixClock.getState().neon, true);
+  assert.equal(document.getElementById("matrixToggle").checked, true);
+  assert.equal(document.getElementById("neonToggle").checked, true);
+  resetCalls();
+  setToggle("matrix", false);
+  assert.equal(document.getElementById("matrixToggle").checked, true);
+  assert.equal(window.matrixClock.getState().matrix, true);
+  assert.equal(calls.bodyClasses, 0);
+  assert.equal(calls.clockRenders, 0);
+});
+
+test("clock options still render immediately without touching the background", async (t) => {
+  const { window, calls, resetCalls, setToggle } = createAppEnvironment(
+    t,
+    null,
+    {
+      renderers: true,
+    },
+  );
+  await import("../js/main.js?clock-option-updates");
+  for (const key of [
+    "hour24",
+    "showAmPm",
+    "leadingZero",
+    "hideSeconds",
+    "glitch",
+    "glyph",
+  ]) {
+    resetCalls();
+    setToggle(key, true);
+    assert.equal(window.matrixClock.getState()[key], true);
+    assert.equal(calls.clockRenders, 1);
+    assert.equal(calls.bodyClasses, 0);
+    assert.equal(calls.styleReads, 0);
+    assert.equal(calls.canvasClears, 0);
+    setToggle(key, false);
+  }
 });

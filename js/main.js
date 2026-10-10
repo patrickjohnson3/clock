@@ -232,10 +232,48 @@ function scheduleSave() {
 }
 
 function updateState(partial) {
+  const previous = state;
   state = normalizeState({ ...state, ...partial });
-  render();
+
+  // Normalization can change settings not present in the input (Matrix mode).
+  const visualsChanged =
+    state.font !== previous.font ||
+    state.lightMode !== previous.lightMode ||
+    state.matrixMode !== previous.matrixMode ||
+    state.matrix !== previous.matrix ||
+    state.glow !== previous.glow ||
+    state.neon !== previous.neon;
+  if (visualsChanged) {
+    renderVisuals(state);
+  }
+  if (
+    state.soundVolume !== previous.soundVolume ||
+    state.brownNoise !== previous.brownNoise ||
+    state.pinkNoise !== previous.pinkNoise ||
+    state.rainStorm !== previous.rainStorm ||
+    state.aircraftCabin !== previous.aircraftCabin ||
+    state.dubTechno !== previous.dubTechno
+  ) {
+    renderAudio(state);
+  }
+  if (
+    state.hour24 !== previous.hour24 ||
+    state.showAmPm !== previous.showAmPm ||
+    state.leadingZero !== previous.leadingZero ||
+    state.hideSeconds !== previous.hideSeconds ||
+    state.clockScale !== previous.clockScale ||
+    state.glitch !== previous.glitch ||
+    state.glyph !== previous.glyph
+  ) {
+    renderClock(state);
+  }
+  if (state.wakeLock !== previous.wakeLock) {
+    syncWakeLock(state);
+  }
   ui.setControlsFromState(state);
-  ui.updateScrollHint();
+  if (visualsChanged) {
+    ui.updateScrollHint();
+  }
   scheduleSave();
 }
 

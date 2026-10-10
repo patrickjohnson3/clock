@@ -31,13 +31,13 @@ export function createUI() {
   };
 
   function setChecked(el, value) {
-    if (el) {
+    if (el && el.checked !== value) {
       el.checked = value;
     }
   }
 
   function setValue(el, value) {
-    if (el) {
+    if (el && el.value !== value) {
       el.value = value;
     }
   }
