@@ -44,6 +44,10 @@ The top panel is grouped into 3 sections:
 
 Use `Hide Panel` to collapse the panel. Use the subtle top handle to reopen it.
 
+Use `Clock Size (%)` to enlarge the clock from 100% to 200% without changing its
+responsive default size. If enlarged text exceeds the screen, scroll the clock
+to reach the whole time; keyboard users can focus the clock and use arrow keys.
+
 ## Project Structure
 
 - `index.html` - app shell and control markup

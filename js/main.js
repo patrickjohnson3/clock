@@ -271,6 +271,9 @@ ui.bindToggle(ui.refs.toggles.wakeLock, (checked) =>
 ui.bindRange(ui.refs.soundVolumeSlider, (value) =>
   updateState({ soundVolume: Number(value) }),
 );
+ui.bindRange(ui.refs.clockScaleSlider, (value) =>
+  updateState({ clockScale: Number(value) }),
+);
 ui.bindSelect(ui.refs.modeSelect, (mode) =>
   updateState({
     lightMode: mode === "light",

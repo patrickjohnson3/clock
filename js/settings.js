@@ -53,6 +53,9 @@ export function createSettings({
         typeof saved.hideSeconds === "boolean"
           ? saved.hideSeconds
           : defaults.hideSeconds,
+      clockScale: Number.isFinite(saved.clockScale)
+        ? saved.clockScale
+        : defaults.clockScale,
       matrix:
         typeof saved.matrix === "boolean" ? saved.matrix : defaults.matrix,
       glow: typeof saved.glow === "boolean" ? saved.glow : defaults.glow,

@@ -55,12 +55,18 @@ canvas {
 #clock {
   position: relative;
   z-index: 1;
-  font-size: clamp(2rem, 12vw, 8rem);
+  font-size: calc(clamp(2rem, 12vw, 8rem) * var(--clock-scale, 1));
   text-align: center;
   height: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: safe center;
+  justify-content: safe center;
+  overflow: auto;
+}
+
+#clock:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: -2px;
 }
 
 body.neon-on #clock {
@@ -89,6 +95,7 @@ body.glow-on #clock::before {
 
 .digit {
   display: inline-block;
+  flex-shrink: 0;
   position: relative;
   cursor: default;
 }

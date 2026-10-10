@@ -103,6 +103,12 @@ export function createClock({ container, chars, tuning }) {
   }
 
   function render(state) {
+    if (container) {
+      container.style.setProperty(
+        "--clock-scale",
+        String(state.clockScale / 100),
+      );
+    }
     const time = formatTime(new Date(), state);
 
     for (let i = 0; i < time.length; i += 1) {

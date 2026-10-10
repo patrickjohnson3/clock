@@ -14,6 +14,7 @@ export const DEFAULTS = {
   showAmPm: false,
   leadingZero: false,
   hideSeconds: false,
+  clockScale: 100,
   matrix: false,
   glow: false,
   neon: false,

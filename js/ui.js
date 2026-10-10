@@ -27,6 +27,7 @@ export function createUI(defaults) {
     fontSelect: document.getElementById("fontSelect"),
     modeSelect: document.getElementById("modeSelect"),
     soundVolumeSlider: document.getElementById("soundVolumeSlider"),
+    clockScaleSlider: document.getElementById("clockScaleSlider"),
   };
 
   function setChecked(el, value) {
@@ -87,6 +88,7 @@ export function createUI(defaults) {
     setChecked(refs.toggles.wakeLock, state.wakeLock);
     setChecked(refs.toggles.persistStorage, state.persistStorage);
     setValue(refs.soundVolumeSlider, String(state.soundVolume));
+    setValue(refs.clockScaleSlider, String(state.clockScale));
 
     if (refs.fontSelect) {
       refs.fontSelect.value = state.font;
