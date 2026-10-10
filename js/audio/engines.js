@@ -37,6 +37,13 @@ export function createBrownNoiseEngine(config, { getContext }) {
       channel[i] = lastOut * config.boost;
     }
 
+    // Solve the periodic initial state, then add its decaying contribution.
+    let correction = lastOut / (1 - config.damping ** -length);
+    for (let i = 0; i < length; i += 1) {
+      correction /= config.damping;
+      channel[i] += correction * config.boost;
+    }
+
     return buffer;
   }
 

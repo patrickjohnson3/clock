@@ -141,9 +141,13 @@ export function createAudioContext() {
       destination: {},
       createGain: node,
       createBiquadFilter: node,
-      createBuffer(_channels, length) {
+      createBuffer(channels, length) {
         bufferCount += 1;
-        return { getChannelData: () => new Float32Array(length) };
+        const data = Array.from(
+          { length: channels },
+          () => new Float32Array(length),
+        );
+        return { getChannelData: (channel) => data[channel] };
       },
       createBufferSource: createSource,
       createOscillator: createSource,

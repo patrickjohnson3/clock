@@ -128,6 +128,61 @@ for (const [key, createEngine] of Object.entries(factories)) {
   });
 }
 
+for (const [random, expected] of [
+  [0.75, 1.75],
+  [0, -3.5],
+]) {
+  test(`Brown Noise loops constant input at its steady-state output ${expected}`, (t) => {
+    t.mock.method(Math, "random", () => random);
+    const context = createAudioContext();
+    const engine = createBrownNoiseEngine(TUNING.audio.brownNoise, {
+      getContext: () => context,
+    });
+    engine.start();
+    const source = context.sources[0];
+    assert.equal(source.loop, true);
+    for (const sample of source.buffer.getChannelData(0)) {
+      // A constant input must be at equilibrium throughout a periodic buffer.
+      assert.ok(Math.abs(sample - expected) < 1e-6, `${sample}`);
+    }
+    engine.stop();
+  });
+}
+
+test("Brown Noise preserves its filter recurrence across every sample, including the loop seam", (t) => {
+  let seed;
+  let inputs;
+  t.mock.method(Math, "random", () => {
+    seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
+    const random = seed / 4294967296;
+    inputs.push(random * 2 - 1);
+    return random;
+  });
+  for (const sampleRate of [100, 44100, 48000]) {
+    seed = 42;
+    inputs = [];
+    const context = createAudioContext();
+    context.sampleRate = sampleRate;
+    const engine = createBrownNoiseEngine(TUNING.audio.brownNoise, {
+      getContext: () => context,
+    });
+    engine.start();
+    const samples = context.sources[0].buffer.getChannelData(0);
+    assert.equal(samples.length, sampleRate * 2);
+    assert.equal(inputs.length, samples.length);
+    for (let i = 0; i < samples.length; i += 1) {
+      const previous = samples[(i + samples.length - 1) % samples.length];
+      // Invert the configured recurrence to recover the original white input.
+      const recovered = (1.02 * samples[i] - previous) / 0.07;
+      assert.ok(
+        Math.abs(recovered - inputs[i]) < 2e-6,
+        `${sampleRate} Hz, sample ${i}: ${recovered} != ${inputs[i]}`,
+      );
+    }
+    engine.stop();
+  }
+});
+
 test("Dub Techno stops every oscillator and can restart without duplicates", (t) => {
   installGlobals(t, {
     window: createWindow(),
