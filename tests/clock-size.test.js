@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { DEFAULTS, STORAGE_ENABLED_KEY, STORAGE_KEY } from "../js/config.js";
-import { createSettings } from "../js/settings.js";
+import { DEFAULTS, STORAGE_KEY } from "../js/config.js";
+import { loadSettings, saveSettings } from "../js/settings.js";
 import { normalizeState } from "../js/state.js";
 import { installGlobals } from "./helpers/audio.js";
 
@@ -34,23 +34,16 @@ test("clock size round-trips only with persistence enabled and defaults for olde
       removeItem: (key) => saved.delete(key),
     },
   });
-  const settings = createSettings({
-    defaults: DEFAULTS,
-    storageKey: STORAGE_KEY,
-    storageEnabledKey: STORAGE_ENABLED_KEY,
-    normalizeState,
-  });
-
-  assert.equal(settings.load().clockScale, 100);
-  settings.save({ ...DEFAULTS, persistStorage: true, clockScale: 200 });
-  assert.equal(settings.load().clockScale, 200);
+  assert.equal(loadSettings().clockScale, 100);
+  saveSettings({ ...DEFAULTS, persistStorage: true, clockScale: 200 });
+  assert.equal(loadSettings().clockScale, 200);
 
   for (const clockScale of [undefined, "200", null, 250]) {
     saved.set(STORAGE_KEY, JSON.stringify({ clockScale }));
-    assert.equal(settings.load().clockScale, clockScale === 250 ? 200 : 100);
+    assert.equal(loadSettings().clockScale, clockScale === 250 ? 200 : 100);
   }
 
-  settings.save({ ...DEFAULTS, persistStorage: false, clockScale: 200 });
+  saveSettings({ ...DEFAULTS, persistStorage: false, clockScale: 200 });
   assert.equal(saved.has(STORAGE_KEY), false);
-  assert.equal(settings.load().clockScale, 100);
+  assert.equal(loadSettings().clockScale, 100);
 });

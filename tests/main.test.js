@@ -110,6 +110,7 @@ function createAppEnvironment(t, savedSettings, { renderers = false } = {}) {
     [STORAGE_ENABLED_KEY, JSON.stringify(Boolean(savedSettings))],
     [STORAGE_KEY, JSON.stringify(savedSettings)],
   ]);
+  const storageWrites = [];
   installGlobals(t, {
     window,
     document,
@@ -118,13 +119,25 @@ function createAppEnvironment(t, savedSettings, { renderers = false } = {}) {
       calls.styleReads += 1;
       return { getPropertyValue: () => "" };
     },
-    localStorage: { getItem: (key) => saved.get(key) ?? null },
+    localStorage: {
+      getItem: (key) => saved.get(key) ?? null,
+      setItem(key, value) {
+        storageWrites.push(key);
+        saved.set(key, value);
+      },
+      removeItem(key) {
+        storageWrites.push(key);
+        saved.delete(key);
+      },
+    },
   });
   return {
     context,
     window,
     document,
     stylesheets,
+    saved,
+    storageWrites,
     calls,
     resetCalls() {
       for (const key in calls) calls[key] = 0;
@@ -491,4 +504,29 @@ test("fullscreen stays browser-owned and restores its control after rejection", 
   await new Promise(setImmediate);
   assert.equal(window.matrixClock.getState().fullscreen, false);
   assert.equal(document.getElementById("fullscreenToggle").checked, false);
+});
+
+test("settings saves are debounced and pending changes flush on unload", async (t) => {
+  const { document, window, saved, storageWrites, setToggle } =
+    createAppEnvironment(t, null);
+  await import("../js/main.js?save-lifecycle");
+  const storage = document.getElementById("storageToggle");
+  storage.checked = true;
+  storage.dispatchEvent(new Event("change"));
+  window.advanceTime(119);
+  assert.equal(storageWrites.length, 0);
+  setToggle("hour24", true);
+  window.advanceTime(119);
+  assert.equal(storageWrites.length, 0);
+  window.advanceTime(1);
+  assert.equal(storageWrites.length, 2);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).hour24, true);
+  assert.equal(saved.get(STORAGE_ENABLED_KEY), "true");
+
+  setToggle("leadingZero", true);
+  window.dispatchEvent(new Event("beforeunload"));
+  assert.equal(storageWrites.length, 4);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).leadingZero, true);
+  window.advanceTime(200);
+  assert.equal(storageWrites.length, 4);
 });

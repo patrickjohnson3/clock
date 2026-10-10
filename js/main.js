@@ -1,12 +1,5 @@
 import { createClock } from "./clock.js";
-import {
-  CHARS,
-  DEFAULTS,
-  STORAGE_ENABLED_KEY,
-  STORAGE_KEY,
-  SYSTEM_FONT,
-  TUNING,
-} from "./config.js";
+import { CHARS, SYSTEM_FONT, TUNING } from "./config.js";
 import {
   createAircraftCabinEngine,
   createBrownNoiseEngine,
@@ -16,17 +9,11 @@ import {
 } from "./audio/engines.js";
 import { createSoundManager } from "./audio/manager.js";
 import { createMatrix } from "./matrix.js";
-import { createSettings } from "./settings.js";
+import { loadSettings, saveSettings } from "./settings.js";
 import { normalizeState } from "./state.js";
 import { createUI } from "./ui.js";
 
 const ui = createUI();
-const settings = createSettings({
-  defaults: DEFAULTS,
-  storageKey: STORAGE_KEY,
-  storageEnabledKey: STORAGE_ENABLED_KEY,
-  normalizeState,
-});
 
 let sharedAudioContext = null;
 function getSharedAudioContext() {
@@ -87,7 +74,7 @@ const soundManager = createSoundManager({
   }),
 });
 
-let state = settings.load();
+let state = loadSettings();
 let saveTimerId = null;
 let clockTimerId = null;
 let wakeLockSentinel = null;
@@ -218,7 +205,7 @@ function flushSave() {
     window.clearTimeout(saveTimerId);
     saveTimerId = null;
   }
-  settings.save(state);
+  saveSettings(state);
 }
 
 function scheduleSave() {
@@ -227,7 +214,7 @@ function scheduleSave() {
   }
   saveTimerId = window.setTimeout(() => {
     saveTimerId = null;
-    settings.save(state);
+    saveSettings(state);
   }, 120);
 }
 
