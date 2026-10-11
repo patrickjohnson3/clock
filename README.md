@@ -43,6 +43,8 @@ The top panel is grouped into 3 sections:
 - Right: `Sound`
 
 Use `Hide Panel` to collapse the panel. Use the subtle top handle to reopen it.
+While open, the panel shares the screen with an unobscured clock preview. Scroll
+the panel to reach additional controls; hiding it restores the full-screen clock.
 
 `Keep Screen Awake` requests a screen wake lock; the status below it reports
 whether it is active, paused, released, or unavailable. The checked toggle is your
