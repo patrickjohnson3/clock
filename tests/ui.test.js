@@ -134,7 +134,7 @@ test("sound status does not repeat an unchanged accessible message", (t) => {
 test("status announcements and a collapsed-panel notice survive independently of inert controls", (t) => {
   const elements = new Map();
   let announcementWrites = 0;
-  for (const key of ["wakeLock", "storage", "sound"]) {
+  for (const key of ["wakeLock", "storage", "sound", "fullscreen"]) {
     elements.set(`${key}Status`, { textContent: "" });
     let textContent = "";
     const classes = new Set();
@@ -177,9 +177,17 @@ test("status announcements and a collapsed-panel notice survive independently of
   assert.notEqual(elements.get("panelNotice").textContent, "");
   ui.setSoundStatus("Sound is playing.");
   assert.equal(elements.get("panelNotice").textContent, "");
+  ui.setFullscreenStatus("Could not enter fullscreen.", true);
+  assert.equal(
+    elements.get("fullscreenAnnouncement").textContent,
+    "Could not enter fullscreen.",
+  );
+  assert.notEqual(elements.get("panelNotice").textContent, "");
+  ui.setFullscreenStatus("");
+  assert.equal(elements.get("panelNotice").textContent, "");
 });
 
-for (const kind of ["wakeLock", "storage", "sound"]) {
+for (const kind of ["wakeLock", "storage", "sound", "fullscreen"]) {
   for (const scenario of [
     "moves below",
     "moves above",

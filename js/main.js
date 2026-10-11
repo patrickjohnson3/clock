@@ -112,11 +112,13 @@ let clockTimerId = null;
 let wakeLockSentinel = null;
 let wakeLockRequest = null;
 let webFontsRequested = false;
+let fullscreenRequestId = 0;
 const motionPreference = window.matchMedia?.(
   "(prefers-reduced-motion: reduce)",
 );
 motionPreference?.addEventListener("change", syncMatrix);
 ui.setControlsFromState(state);
+updateFullscreenAvailability();
 ui.updateScrollHint();
 
 function renderVisuals(nextState) {
@@ -165,13 +167,29 @@ function renderClock(nextState) {
   clock.render(nextState);
 }
 
+function updateFullscreenAvailability() {
+  const available = document.fullscreenElement
+    ? Boolean(document.exitFullscreen)
+    : Boolean(document.documentElement?.requestFullscreen) &&
+      document.fullscreenEnabled !== false;
+  if (ui.refs.toggles.fullscreen)
+    ui.refs.toggles.fullscreen.disabled = !available;
+  ui.setFullscreenStatus(
+    available
+      ? ""
+      : document.fullscreenElement
+        ? "Fullscreen cannot be exited here. Use your browser's fullscreen exit command."
+        : "Fullscreen is unavailable in this browser or page.",
+  );
+}
+
 async function setFullscreen(enabled) {
   if (enabled) {
     if (document.fullscreenElement) {
       return true;
     }
     const root = document.documentElement;
-    if (!root.requestFullscreen) {
+    if (!root?.requestFullscreen || document.fullscreenEnabled === false) {
       return false;
     }
     try {
@@ -182,8 +200,11 @@ async function setFullscreen(enabled) {
     }
   }
 
-  if (!document.fullscreenElement || !document.exitFullscreen) {
+  if (!document.fullscreenElement) {
     return true;
+  }
+  if (!document.exitFullscreen) {
+    return false;
   }
   try {
     await document.exitFullscreen();
@@ -337,9 +358,21 @@ for (const [key, toggle] of Object.entries(ui.refs.toggles)) {
   }
 }
 ui.bindToggle(ui.refs.toggles.fullscreen, async (checked) => {
+  const requestId = ++fullscreenRequestId;
   const success = await setFullscreen(checked);
+  if (requestId !== fullscreenRequestId) return;
+  const isFullscreen = Boolean(document.fullscreenElement);
+  updateFullscreenAvailability();
   if (!success) {
-    updateState({ fullscreen: Boolean(document.fullscreenElement) });
+    updateState({ fullscreen: isFullscreen });
+    if (isFullscreen !== checked) {
+      ui.setFullscreenStatus(
+        checked
+          ? "Could not enter fullscreen. Your browser or page may block it. Try again or use your browser's fullscreen controls."
+          : "Could not exit fullscreen. Use your browser's fullscreen exit command.",
+        true,
+      );
+    }
   }
 });
 ui.bindRange(ui.refs.soundVolumeSlider, (value) =>
@@ -404,6 +437,7 @@ window.addEventListener("fullscreenchange", () => {
   if (state.fullscreen !== isFullscreen) {
     updateState({ fullscreen: isFullscreen });
   }
+  updateFullscreenAvailability();
 });
 
 window.matrixClock = {

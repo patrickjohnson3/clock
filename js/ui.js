@@ -10,11 +10,13 @@ export function createUI() {
     matrixModeHint: document.getElementById("matrixModeHint"),
     showAmPmHint: document.getElementById("showAmPmHint"),
     soundStatus: document.getElementById("soundStatus"),
+    fullscreenStatus: document.getElementById("fullscreenStatus"),
     panelNotice: document.getElementById("panelNotice"),
     announcements: {
       wakeLock: document.getElementById("wakeLockAnnouncement"),
       storage: document.getElementById("storageAnnouncement"),
       sound: document.getElementById("soundAnnouncement"),
+      fullscreen: document.getElementById("fullscreenAnnouncement"),
     },
     toggles: {
       glitch: document.getElementById("glitchToggle"),
@@ -138,6 +140,15 @@ export function createUI() {
     );
   }
 
+  function setFullscreenStatus(message, needsAttention = false) {
+    setStatus(
+      refs.fullscreenStatus,
+      refs.announcements.fullscreen,
+      message,
+      needsAttention,
+    );
+  }
+
   function bindSelect(selectEl, onChange) {
     if (!selectEl) {
       return;
@@ -246,6 +257,7 @@ export function createUI() {
     setWakeLockStatus,
     setStorageStatus,
     setSoundStatus,
+    setFullscreenStatus,
     bindCollapse,
     bindScrollHint,
     updateScrollHint,

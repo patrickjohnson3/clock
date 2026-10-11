@@ -310,6 +310,7 @@ label {
 
 #wakeLockStatus,
 #storageStatus,
+#fullscreenStatus,
 #matrixModeHint,
 #showAmPmHint,
 #soundStatus {
@@ -318,7 +319,8 @@ label {
   line-height: 1.35;
 }
 
-#storageStatus:empty {
+#storageStatus:empty,
+#fullscreenStatus:empty {
   display: none;
 }
 

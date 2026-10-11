@@ -50,6 +50,7 @@ function createAppEnvironment(t, savedSettings, { renderers = false } = {}) {
     ].map((id) => [id, new EventTarget()]),
   );
   for (const control of controls.values()) {
+    control.disabled = false;
     let checked = false;
     Object.defineProperty(control, "checked", {
       get: () => checked,
@@ -64,10 +65,11 @@ function createAppEnvironment(t, savedSettings, { renderers = false } = {}) {
   controls.set("matrixModeHint", { hidden: true });
   controls.set("showAmPmHint", { hidden: true });
   controls.set("soundStatus", { textContent: "" });
+  controls.set("fullscreenStatus", { textContent: "" });
   controls.set("clockScaleOutput", { value: "" });
   controls.set("soundVolumeOutput", { value: "" });
   controls.set("panelNotice", { textContent: "" });
-  for (const key of ["wakeLock", "storage", "sound"]) {
+  for (const key of ["wakeLock", "storage", "sound", "fullscreen"]) {
     const classes = new Set();
     controls.set(`${key}Announcement`, {
       textContent: "",
@@ -884,7 +886,29 @@ test("every ordinary toggle updates its matching state key in both directions", 
   }
 });
 
-test("fullscreen stays browser-owned and restores its control after rejection", async (t) => {
+for (const reason of ["missing API", "page policy"]) {
+  test(`fullscreen unavailability is explained: ${reason}`, async (t) => {
+    const { document, window } = createAppEnvironment(t, null);
+    document.documentElement = {};
+    if (reason === "page policy") {
+      document.fullscreenEnabled = false;
+      document.documentElement.requestFullscreen = () => {
+        assert.fail("A policy-blocked fullscreen control must not request it");
+      };
+    }
+    await import(`../js/main.js?fullscreen-unavailable-${reason}`);
+    assert.equal(document.getElementById("fullscreenToggle").disabled, true);
+    const status = document.getElementById("fullscreenStatus");
+    assert.match(status.textContent, /fullscreen.*unavailable/i);
+    assert.equal(
+      document.getElementById("fullscreenAnnouncement").textContent,
+      status.textContent,
+    );
+    assert.equal(window.matrixClock.getState().fullscreen, false);
+  });
+}
+
+test("fullscreen stays browser-owned and explains rejected entry and exit", async (t) => {
   const { document, window, setToggle } = createAppEnvironment(t, null);
   let requests = 0;
   document.documentElement = {
@@ -899,6 +923,10 @@ test("fullscreen stays browser-owned and restores its control after rejection", 
     window.dispatchEvent(new Event("fullscreenchange"));
   };
   await import("../js/main.js?fullscreen-toggle");
+  assert.equal(document.getElementById("fullscreenToggle").disabled, false);
+  const status = document.getElementById("fullscreenStatus");
+  const announcement = document.getElementById("fullscreenAnnouncement");
+  assert.equal(status.textContent, "");
   setToggle("fullscreen", true);
   await new Promise(setImmediate);
   assert.equal(requests, 1);
@@ -907,13 +935,107 @@ test("fullscreen stays browser-owned and restores its control after rejection", 
   await new Promise(setImmediate);
   assert.equal(window.matrixClock.getState().fullscreen, false);
 
+  const requestFullscreen = document.documentElement.requestFullscreen;
   document.documentElement.requestFullscreen = () =>
     Promise.reject(new Error("Denied"));
   setToggle("fullscreen", true);
   await new Promise(setImmediate);
   assert.equal(window.matrixClock.getState().fullscreen, false);
   assert.equal(document.getElementById("fullscreenToggle").checked, false);
+  assert.match(status.textContent, /could not enter fullscreen/i);
+  assert.equal(announcement.textContent, status.textContent);
+  assert.equal(announcement.classList.contains("needs-attention"), true);
+  assert.equal(document.getElementById("fullscreenToggle").disabled, false);
+
+  document.documentElement.requestFullscreen = requestFullscreen;
+  setToggle("fullscreen", true);
+  await new Promise(setImmediate);
+  assert.equal(window.matrixClock.getState().fullscreen, true);
+  assert.equal(status.textContent, "");
+  assert.equal(announcement.classList.contains("needs-attention"), false);
+
+  document.exitFullscreen = () => Promise.reject(new Error("Denied"));
+  setToggle("fullscreen", false);
+  await new Promise(setImmediate);
+  assert.equal(window.matrixClock.getState().fullscreen, true);
+  assert.equal(document.getElementById("fullscreenToggle").checked, true);
+  assert.match(status.textContent, /could not exit fullscreen.*browser/i);
+  assert.equal(announcement.textContent, status.textContent);
+
+  document.fullscreenElement = null;
+  window.dispatchEvent(new Event("fullscreenchange"));
+  assert.equal(window.matrixClock.getState().fullscreen, false);
+  assert.equal(document.getElementById("fullscreenToggle").checked, false);
+  assert.equal(status.textContent, "");
+  assert.equal(announcement.classList.contains("needs-attention"), false);
 });
+
+test("fullscreen exit stays available when entry is blocked, and a missing exit API is explained", async (t) => {
+  const { document, window, setToggle } = createAppEnvironment(t, null);
+  document.documentElement = { requestFullscreen: async () => {} };
+  document.exitFullscreen = async () => {
+    document.fullscreenElement = null;
+    window.dispatchEvent(new Event("fullscreenchange"));
+  };
+  await import("../js/main.js?fullscreen-exit-capability");
+  document.fullscreenEnabled = false;
+  document.fullscreenElement = document.documentElement;
+  window.dispatchEvent(new Event("fullscreenchange"));
+  const toggle = document.getElementById("fullscreenToggle");
+  assert.equal(toggle.disabled, false);
+  assert.equal(toggle.checked, true);
+  setToggle("fullscreen", false);
+  await new Promise(setImmediate);
+  assert.equal(document.fullscreenElement, null);
+  assert.equal(toggle.disabled, true);
+
+  document.fullscreenElement = document.documentElement;
+  delete document.exitFullscreen;
+  window.dispatchEvent(new Event("fullscreenchange"));
+  assert.equal(toggle.disabled, true);
+  assert.match(
+    document.getElementById("fullscreenStatus").textContent,
+    /browser.*exit command/i,
+  );
+  setToggle("fullscreen", false);
+  await new Promise(setImmediate);
+  assert.equal(toggle.checked, true);
+  assert.equal(window.matrixClock.getState().fullscreen, true);
+  assert.match(
+    document.getElementById("fullscreenStatus").textContent,
+    /could not exit fullscreen/i,
+  );
+});
+
+for (const transition of ["toggle off", "browser enters"]) {
+  test(`a late fullscreen rejection does not override ${transition}`, async (t) => {
+    const { document, window, setToggle } = createAppEnvironment(t, null);
+    let reject;
+    document.documentElement = {
+      requestFullscreen: () =>
+        new Promise((_, onReject) => {
+          reject = onReject;
+        }),
+    };
+    document.exitFullscreen = async () => {};
+    await import(`../js/main.js?late-fullscreen-rejection-${transition}`);
+    setToggle("fullscreen", true);
+    if (transition === "toggle off") {
+      setToggle("fullscreen", false);
+    } else {
+      document.fullscreenElement = document.documentElement;
+      window.dispatchEvent(new Event("fullscreenchange"));
+    }
+    await new Promise(setImmediate);
+    reject(new Error("Old rejection"));
+    await new Promise(setImmediate);
+    assert.equal(document.getElementById("fullscreenStatus").textContent, "");
+    assert.equal(
+      document.getElementById("fullscreenToggle").checked,
+      Boolean(document.fullscreenElement),
+    );
+  });
+}
 
 for (const [name, savedSettings, size, volume] of [
   ["defaults", null, 100, 100],

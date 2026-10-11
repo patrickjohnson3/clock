@@ -59,6 +59,11 @@ preference, not a guarantee that the browser will keep the screen on. After a
 failed request or release, toggle it off and on to retry; returning to the page
 also requests it again when enabled.
 
+`Fullscreen` follows the browser's actual fullscreen state. It is disabled with
+an explanation when the browser or page disallows it. Rejected entry or exit
+attempts show a status message; you can also use your browser's fullscreen exit
+command. If the panel is hidden, reopen it to reach the Fullscreen toggle.
+
 Use `Clock Size (%)` to enlarge the clock from 100% to 200% without changing its
 responsive default size. If enlarged text exceeds the screen, scroll the clock
 to reach the whole time; keyboard users can focus the clock and use arrow keys.

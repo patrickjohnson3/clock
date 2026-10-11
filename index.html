@@ -44,8 +44,14 @@
             </select>
           </label>
           <label
-            ><input type="checkbox" id="fullscreenToggle" /> Fullscreen</label
+            ><input
+              type="checkbox"
+              id="fullscreenToggle"
+              aria-describedby="fullscreenStatus"
+            />
+            Fullscreen</label
           >
+          <p id="fullscreenStatus"></p>
           <label
             ><input
               type="checkbox"
@@ -200,6 +206,7 @@
       <p id="wakeLockAnnouncement" role="status"></p>
       <p id="storageAnnouncement" role="status"></p>
       <p id="soundAnnouncement" role="status"></p>
+      <p id="fullscreenAnnouncement" role="status"></p>
     </div>
     <p id="panelNotice"></p>
 
