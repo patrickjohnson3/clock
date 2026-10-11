@@ -9,6 +9,7 @@ export function createUI() {
     storageStatus: document.getElementById("storageStatus"),
     matrixModeHint: document.getElementById("matrixModeHint"),
     showAmPmHint: document.getElementById("showAmPmHint"),
+    soundStatus: document.getElementById("soundStatus"),
     toggles: {
       glitch: document.getElementById("glitchToggle"),
       glyph: document.getElementById("glyphToggle"),
@@ -72,6 +73,14 @@ export function createUI() {
 
   function setStorageStatus(message) {
     const status = refs.storageStatus;
+    if (status && status.textContent !== message) {
+      status.textContent = message;
+      updateScrollHint();
+    }
+  }
+
+  function setSoundStatus(message) {
+    const status = refs.soundStatus;
     if (status && status.textContent !== message) {
       status.textContent = message;
       updateScrollHint();
@@ -183,6 +192,7 @@ export function createUI() {
     setControlsFromState,
     setWakeLockStatus,
     setStorageStatus,
+    setSoundStatus,
     bindCollapse,
     bindScrollHint,
     updateScrollHint,

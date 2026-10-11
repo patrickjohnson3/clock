@@ -104,3 +104,29 @@ test("constrained controls explain their disabled state without discarding prefe
   assert.equal(elements.get("matrixModeHint").hidden, true);
   assert.equal(elements.get("showAmPmHint").hidden, true);
 });
+
+test("sound status does not repeat an unchanged accessible message", (t) => {
+  let textContent = "";
+  let writes = 0;
+  const status = {
+    get textContent() {
+      return textContent;
+    },
+    set textContent(value) {
+      textContent = value;
+      writes += 1;
+    },
+  };
+  installGlobals(t, {
+    document: {
+      getElementById: (id) => (id === "soundStatus" ? status : null),
+    },
+  });
+  const ui = createUI();
+  ui.setSoundStatus("Sound is paused.");
+  ui.setSoundStatus("Sound is paused.");
+  assert.equal(writes, 1);
+  ui.setSoundStatus("Sound is playing.");
+  assert.equal(status.textContent, "Sound is playing.");
+  assert.equal(writes, 2);
+});

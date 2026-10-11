@@ -40,10 +40,33 @@ function syncSharedAudioContext() {
   }
   const soundsEnabled = soundManager.hasEnabledSounds(state);
   if (soundsEnabled && sharedAudioContext.state === "suspended") {
-    sharedAudioContext.resume().catch(() => {});
+    sharedAudioContext.resume().catch(updateSoundStatus);
   } else if (!soundsEnabled && sharedAudioContext.state === "running") {
     sharedAudioContext.suspend().catch(() => {});
   }
+}
+
+function updateSoundStatus() {
+  let message;
+  if (!soundManager.hasEnabledSounds(state)) {
+    message = "Sound is off.";
+  } else if (!sharedAudioContext) {
+    message =
+      window.AudioContext || window.webkitAudioContext
+        ? "Sound could not start. Toggle a sound off and on to retry."
+        : "Sound is unavailable in this browser.";
+  } else if (sharedAudioContext.state === "closed") {
+    message = "Sound is unavailable. Reload the page to retry.";
+  } else if (sharedAudioContext.state !== "running") {
+    message =
+      "Sound is paused by the browser. Click or press a key to try playback.";
+  } else {
+    message =
+      state.soundVolume === 0
+        ? "Sound is muted (volume is 0%)."
+        : "Sound is playing.";
+  }
+  ui.setSoundStatus(message);
 }
 
 window.addEventListener("pointerup", syncSharedAudioContext);
@@ -124,6 +147,7 @@ function renderAudio(nextState) {
   // Autoplay may block resume; wait before generating buffers or starting timers.
   soundManager.sync(nextState, sharedAudioContext?.state === "running");
   syncSharedAudioContext();
+  updateSoundStatus();
 }
 
 function renderClock(nextState) {

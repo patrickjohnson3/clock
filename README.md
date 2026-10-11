@@ -64,6 +64,10 @@ Matrix mode keeps `Matrix Rain` and `Neon FX` enabled; choose Dark or Light mode
 to adjust them separately. `Show AM/PM` is unavailable in 24-hour mode, but its
 preference is retained when switching back to 12-hour mode.
 
+The Sound status distinguishes playing, muted, paused, off, and unavailable audio.
+If restored sounds are paused by the browser, click or press a key to try playback.
+The sound toggles retain your selection while playback is blocked.
+
 ## Project Structure
 
 - `index.html` - app shell and control markup

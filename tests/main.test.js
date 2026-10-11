@@ -62,6 +62,7 @@ function createAppEnvironment(t, savedSettings, { renderers = false } = {}) {
   controls.set("storageStatus", { textContent: "" });
   controls.set("matrixModeHint", { hidden: true });
   controls.set("showAmPmHint", { hidden: true });
+  controls.set("soundStatus", { textContent: "" });
   function createElement(tagName) {
     return Object.assign(new EventTarget(), {
       tagName,
@@ -196,13 +197,18 @@ test("an unlisted saved font falls back consistently before reaching the UI", as
 });
 
 test("restored audio waits for playback permission and resumes without restarting sources", async (t) => {
-  const { context, window, getContextCount } = createAppEnvironment(t, {
-    brownNoise: true,
-  });
+  const { context, document, window, getContextCount } = createAppEnvironment(
+    t,
+    {
+      brownNoise: true,
+    },
+  );
   await import("../js/main.js?restored-audio");
   assert.equal(context.state, "suspended");
   assert.equal(context.activeSources.length, 0);
   assert.equal(context.bufferCount, 0);
+  const status = document.getElementById("soundStatus");
+  assert.match(status.textContent, /paused.*click or press a key/i);
 
   context.allowResume = true;
   let playingSources;
@@ -210,6 +216,7 @@ test("restored audio waits for playback permission and resumes without restartin
     context.state = "suspended";
     window.dispatchEvent(new Event(event));
     assert.equal(context.state, "running");
+    assert.match(status.textContent, /playing/i);
     assert.equal(context.activeSources.length, 1);
     assert.equal(context.bufferCount, 1);
     playingSources ??= [...context.activeSources];
@@ -263,7 +270,7 @@ test("restored sounds start immediately when playback is already permitted", asy
 });
 
 test("saved sounds do not prevent startup when Web Audio is unavailable", async (t) => {
-  const { window, getContextCount } = createAppEnvironment(t, {
+  const { window, document, getContextCount } = createAppEnvironment(t, {
     brownNoise: true,
   });
   delete window.AudioContext;
@@ -271,11 +278,29 @@ test("saved sounds do not prevent startup when Web Audio is unavailable", async 
   window.dispatchEvent(new Event("pointerup"));
   assert.equal(window.matrixClock.getState().brownNoise, true);
   assert.equal(getContextCount(), 0);
+  assert.match(
+    document.getElementById("soundStatus").textContent,
+    /unavailable/i,
+  );
+});
+
+test("a closed audio context reports recovery instead of claiming playback", async (t) => {
+  const { context, document, window } = createAppEnvironment(t, {
+    brownNoise: true,
+  });
+  context.state = "closed";
+  await import("../js/main.js?closed-audio-status");
+  assert.match(
+    document.getElementById("soundStatus").textContent,
+    /unavailable.*reload/i,
+  );
+  assert.equal(context.bufferCount, 0);
+  assert.equal(window.matrixClock.getState().brownNoise, true);
 });
 
 for (const constructorName of ["AudioContext", "webkitAudioContext"]) {
   test(`${constructorName} construction failure does not stop the clock or prevent a later retry`, async (t) => {
-    const { window, context, calls, getContextCount, setToggle } =
+    const { window, document, context, calls, getContextCount, setToggle } =
       createAppEnvironment(t, { brownNoise: true }, { renderers: true });
     const AudioContextClass = window.AudioContext;
     delete window.AudioContext;
@@ -288,6 +313,8 @@ for (const constructorName of ["AudioContext", "webkitAudioContext"]) {
     await import(`../js/main.js?failed-${constructorName}`);
 
     assert.equal(window.matrixClock.getState().brownNoise, true);
+    const status = document.getElementById("soundStatus");
+    assert.match(status.textContent, /could not start.*toggle.*retry/i);
     assert.equal(calls.clockRenders, 1);
     assert.equal(context.bufferCount, 0);
     assert.equal(window.pendingTimerCount, 1);
@@ -304,28 +331,35 @@ for (const constructorName of ["AudioContext", "webkitAudioContext"]) {
     window.dispatchEvent(new Event("pointerup"));
     assert.equal(getContextCount(), 1);
     assert.equal(context.activeSources.length, 1);
+    assert.match(status.textContent, /playing/i);
     window.dispatchEvent(new Event("beforeunload"));
     assert.equal(context.activeSources.length, 0);
   });
 }
 
 test("interacting with sound disabled does not create an AudioContext", async (t) => {
-  const { window, getContextCount } = createAppEnvironment(t, null);
+  const { window, document, getContextCount } = createAppEnvironment(t, null);
   await import("../js/main.js?sound-disabled");
   window.dispatchEvent(new Event("pointerup"));
   window.dispatchEvent(new Event("keydown"));
   assert.equal(getContextCount(), 0);
+  assert.match(
+    document.getElementById("soundStatus").textContent,
+    /sound is off/i,
+  );
 });
 
 test("turning all sounds off suspends audio until a sound is enabled again", async (t) => {
   const { context, document, window, getContextCount, setToggle } =
     createAppEnvironment(t, null);
   await import("../js/main.js?idle-audio");
+  const status = document.getElementById("soundStatus");
   context.allowResume = true;
   setToggle("brownNoise", true);
   setToggle("pinkNoise", true);
   assert.equal(context.state, "running");
   assert.equal(context.activeSources.length, 2);
+  assert.match(status.textContent, /playing/i);
 
   setToggle("brownNoise", false);
   assert.equal(context.state, "running");
@@ -333,6 +367,7 @@ test("turning all sounds off suspends audio until a sound is enabled again", asy
   setToggle("pinkNoise", false);
   assert.equal(context.state, "suspended");
   assert.equal(context.activeSources.length, 0);
+  assert.match(status.textContent, /sound is off/i);
 
   window.dispatchEvent(new Event("pointerup"));
   window.dispatchEvent(new Event("keydown"));
@@ -347,7 +382,36 @@ test("turning all sounds off suspends audio until a sound is enabled again", asy
   volume.dispatchEvent(new Event("input"));
   assert.equal(context.state, "running");
   assert.equal(context.activeSources.length, 1);
+  assert.match(status.textContent, /muted.*0%/i);
 });
+
+for (const afterFailure of ["off", "playing"]) {
+  test(`a late playback rejection cannot override the current ${afterFailure} status`, async (t) => {
+    const { context, document, setToggle } = createAppEnvironment(t, {
+      brownNoise: true,
+    });
+    let rejectResume;
+    context.resume = () =>
+      new Promise((_, reject) => {
+        rejectResume = reject;
+      });
+    await import(`../js/main.js?late-audio-failure-${afterFailure}`);
+    const status = document.getElementById("soundStatus");
+    assert.match(status.textContent, /paused/i);
+    if (afterFailure === "off") setToggle("brownNoise", false);
+    else {
+      context.state = "running";
+      context.dispatchEvent(new Event("statechange"));
+    }
+    rejectResume(new DOMException("Playback denied", "NotAllowedError"));
+    await new Promise(setImmediate);
+    assert.match(
+      status.textContent,
+      afterFailure === "off" ? /sound is off/i : /playing/i,
+    );
+    assert.equal(context.activeSources.length, afterFailure === "off" ? 0 : 1);
+  });
+}
 
 test("audio recovers when a sound is enabled during a pending suspension", async (t) => {
   const { context, setToggle } = createAppEnvironment(t, null);
