@@ -173,26 +173,50 @@ async function releaseWakeLock() {
 
 async function syncWakeLock(nextState) {
   if (!nextState.wakeLock || document.hidden) {
+    ui.setWakeLockStatus(
+      !nextState.wakeLock
+        ? "Screen wake lock is off."
+        : "Screen wake lock paused while this page is hidden.",
+    );
     await releaseWakeLock();
     return;
   }
 
-  if (wakeLockSentinel || wakeLockRequest || !navigator.wakeLock) {
+  if (wakeLockSentinel || wakeLockRequest) {
     return;
   }
 
-  wakeLockRequest = navigator.wakeLock.request("screen");
+  if (!navigator.wakeLock) {
+    ui.setWakeLockStatus(
+      "Screen wake lock unavailable in this browser; the screen may sleep.",
+    );
+    return;
+  }
+
+  ui.setWakeLockStatus("Requesting screen wake lock...");
   try {
-    wakeLockSentinel = await wakeLockRequest;
+    wakeLockRequest = navigator.wakeLock.request("screen");
+    const sentinel = await wakeLockRequest;
+    wakeLockSentinel = sentinel;
     if (!state.wakeLock || document.hidden) {
       await releaseWakeLock();
       return;
     }
-    wakeLockSentinel.addEventListener("release", () => {
+    sentinel.addEventListener("release", () => {
+      if (wakeLockSentinel !== sentinel) return;
       wakeLockSentinel = null;
+      ui.setWakeLockStatus(
+        "Screen wake lock released; the screen may sleep. Toggle off and on to retry.",
+      );
     });
+    ui.setWakeLockStatus("Screen wake lock active.");
   } catch {
     wakeLockSentinel = null;
+    if (state.wakeLock && !document.hidden) {
+      ui.setWakeLockStatus(
+        "Screen wake lock request failed; the screen may sleep. Toggle off and on to retry.",
+      );
+    }
   } finally {
     wakeLockRequest = null;
   }

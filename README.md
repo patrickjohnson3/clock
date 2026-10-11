@@ -44,6 +44,12 @@ The top panel is grouped into 3 sections:
 
 Use `Hide Panel` to collapse the panel. Use the subtle top handle to reopen it.
 
+`Keep Screen Awake` requests a screen wake lock; the status below it reports
+whether it is active, paused, released, or unavailable. The checked toggle is your
+preference, not a guarantee that the browser will keep the screen on. After a
+failed request or release, toggle it off and on to retry; returning to the page
+also requests it again when enabled.
+
 Use `Clock Size (%)` to enlarge the clock from 100% to 200% without changing its
 responsive default size. If enlarged text exceeds the screen, scroll the clock
 to reach the whole time; keyboard users can focus the clock and use arrow keys.

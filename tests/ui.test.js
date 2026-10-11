@@ -36,3 +36,30 @@ test("the toggle map covers the HTML checkboxes and synchronizes every state key
     }
   }
 });
+
+test("wake lock status updates do not repeat an unchanged accessible message", (t) => {
+  let textContent = "";
+  let writes = 0;
+  const status = {
+    get textContent() {
+      return textContent;
+    },
+    set textContent(value) {
+      textContent = value;
+      writes += 1;
+    },
+  };
+  installGlobals(t, {
+    document: {
+      getElementById: (id) => (id === "wakeLockStatus" ? status : null),
+    },
+  });
+  const ui = createUI();
+  ui.setWakeLockStatus("Screen wake lock active.");
+  ui.setWakeLockStatus("Screen wake lock active.");
+  assert.equal(status.textContent, "Screen wake lock active.");
+  assert.equal(writes, 1);
+  ui.setWakeLockStatus("Screen wake lock is off.");
+  assert.equal(status.textContent, "Screen wake lock is off.");
+  assert.equal(writes, 2);
+});

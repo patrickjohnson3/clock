@@ -58,6 +58,7 @@ function createAppEnvironment(t, savedSettings, { renderers = false } = {}) {
       },
     });
   }
+  controls.set("wakeLockStatus", { textContent: "" });
   function createElement(tagName) {
     return Object.assign(new EventTarget(), {
       tagName,
@@ -441,6 +442,156 @@ test("volume and clock size changes do not reconcile unrelated renderers", async
   assert.equal(calls.checkboxWrites, 0);
   assert.equal(gainWrites, 0);
   assert.equal(wakeRequests, requestsBefore);
+});
+
+function mockWakeLock() {
+  const requests = [];
+  navigator.wakeLock = {
+    request(type) {
+      assert.equal(type, "screen");
+      return new Promise((resolve, reject) =>
+        requests.push({ resolve, reject }),
+      );
+    },
+  };
+  return requests;
+}
+
+function createWakeLockSentinel() {
+  return Object.assign(new EventTarget(), {
+    released: false,
+    releaseCalls: 0,
+    release() {
+      this.releaseCalls += 1;
+      this.released = true;
+      this.dispatchEvent(new Event("release"));
+      return Promise.resolve();
+    },
+  });
+}
+
+test("an unsupported wake lock is reported without changing the requested preference", async (t) => {
+  const { document, window, setToggle } = createAppEnvironment(t, null);
+  await import("../js/main.js?unsupported-wake-status");
+  const status = document.getElementById("wakeLockStatus");
+  assert.match(status.textContent, /unavailable.*browser/i);
+  assert.equal(window.matrixClock.getState().wakeLock, true);
+  assert.equal(document.getElementById("wakeLockToggle").checked, true);
+  setToggle("wakeLock", false);
+  assert.match(status.textContent, /is off\.$/i);
+});
+
+test("wake lock denial reports failure and allows an explicit retry without changing the preference", async (t) => {
+  const { document, window, saved, storageWrites, setToggle } =
+    createAppEnvironment(t, { wakeLock: true });
+  const requests = mockWakeLock();
+  await import("../js/main.js?denied-wake-status");
+  const status = document.getElementById("wakeLockStatus");
+  assert.match(status.textContent, /requesting/i);
+  requests[0].reject(new DOMException("Denied", "NotAllowedError"));
+  await new Promise(setImmediate);
+  assert.match(status.textContent, /failed.*may sleep/i);
+  assert.match(status.textContent, /retry/i);
+  assert.equal(window.matrixClock.getState().wakeLock, true);
+  assert.equal(document.getElementById("wakeLockToggle").checked, true);
+  assert.equal(storageWrites.length, 0);
+  assert.equal(JSON.parse(saved.get(STORAGE_KEY)).wakeLock, true);
+  window.advanceTime(5000);
+  setToggle("hour24", true);
+  assert.equal(requests.length, 1);
+
+  setToggle("wakeLock", false);
+  assert.match(status.textContent, /is off\.$/i);
+  setToggle("wakeLock", true);
+  assert.equal(requests.length, 2);
+  assert.match(status.textContent, /requesting/i);
+  requests[1].resolve(createWakeLockSentinel());
+  await new Promise(setImmediate);
+  assert.match(status.textContent, /active/i);
+});
+
+test("wake lock release is reported without retrying until the page resumes", async (t) => {
+  const { document, window, setToggle } = createAppEnvironment(t, null);
+  const requests = mockWakeLock();
+  await import("../js/main.js?released-wake-status");
+  const status = document.getElementById("wakeLockStatus");
+  const sentinel = createWakeLockSentinel();
+  requests[0].resolve(sentinel);
+  await new Promise(setImmediate);
+  assert.match(status.textContent, /active/i);
+  sentinel.released = true;
+  sentinel.dispatchEvent(new Event("release"));
+  assert.match(status.textContent, /released.*may sleep/i);
+  window.advanceTime(5000);
+  setToggle("hour24", true);
+  assert.equal(requests.length, 1);
+
+  document.hidden = true;
+  window.dispatchEvent(new Event("visibilitychange"));
+  assert.match(status.textContent, /paused.*hidden/i);
+  document.hidden = false;
+  window.dispatchEvent(new Event("visibilitychange"));
+  window.dispatchEvent(new Event("visibilitychange"));
+  assert.equal(requests.length, 2);
+  const resumed = createWakeLockSentinel();
+  requests[1].resolve(resumed);
+  await new Promise(setImmediate);
+  assert.match(status.textContent, /active/i);
+  setToggle("wakeLock", false);
+  await new Promise(setImmediate);
+  assert.equal(resumed.releaseCalls, 1);
+  assert.match(status.textContent, /is off\.$/i);
+});
+
+for (const hidden of [false, true]) {
+  for (const rejected of [false, true]) {
+    test(`a pending wake lock ${rejected ? "failure" : "success"} cannot override ${hidden ? "background" : "disabled"} status`, async (t) => {
+      const { document, window, setToggle } = createAppEnvironment(t, null);
+      const requests = mockWakeLock();
+      await import(`../js/main.js?pending-wake-status-${hidden}-${rejected}`);
+      const status = document.getElementById("wakeLockStatus");
+      assert.match(status.textContent, /requesting/i);
+      if (hidden) {
+        document.hidden = true;
+        window.dispatchEvent(new Event("visibilitychange"));
+      } else {
+        setToggle("wakeLock", false);
+      }
+      const expected = hidden ? /paused.*hidden/i : /is off\.$/i;
+      assert.match(status.textContent, expected);
+      const sentinel = createWakeLockSentinel();
+      if (rejected)
+        requests[0].reject(new DOMException("Denied", "NotAllowedError"));
+      else requests[0].resolve(sentinel);
+      await new Promise(setImmediate);
+      assert.equal(sentinel.releaseCalls, rejected ? 0 : 1);
+      assert.match(status.textContent, expected);
+      assert.equal(requests.length, 1);
+    });
+  }
+}
+
+test("a delayed old release event cannot change the status of a new wake lock", async (t) => {
+  const { document, setToggle } = createAppEnvironment(t, null);
+  const requests = mockWakeLock();
+  await import("../js/main.js?old-wake-release-status");
+  const old = createWakeLockSentinel();
+  old.release = () => Promise.resolve();
+  requests[0].resolve(old);
+  await new Promise(setImmediate);
+  setToggle("wakeLock", false);
+  setToggle("wakeLock", true);
+  const current = createWakeLockSentinel();
+  requests[1].resolve(current);
+  await new Promise(setImmediate);
+  old.dispatchEvent(new Event("release"));
+  assert.match(
+    document.getElementById("wakeLockStatus").textContent,
+    /active/i,
+  );
+  setToggle("wakeLock", false);
+  await new Promise(setImmediate);
+  assert.equal(current.releaseCalls, 1);
 });
 
 test("normalized Matrix mode updates visuals and repairs forced controls", async (t) => {

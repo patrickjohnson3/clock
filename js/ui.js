@@ -5,6 +5,7 @@ export function createUI() {
     controls: document.getElementById("controls"),
     collapseBtn: document.getElementById("collapseBtn"),
     panelTab: document.getElementById("panelTab"),
+    wakeLockStatus: document.getElementById("wakeLockStatus"),
     toggles: {
       glitch: document.getElementById("glitchToggle"),
       glyph: document.getElementById("glyphToggle"),
@@ -49,6 +50,14 @@ export function createUI() {
     toggleEl.addEventListener("change", (event) => {
       onChange(event.target.checked);
     });
+  }
+
+  function setWakeLockStatus(message) {
+    const status = refs.wakeLockStatus;
+    if (status && status.textContent !== message) {
+      status.textContent = message;
+      updateScrollHint();
+    }
   }
 
   function bindSelect(selectEl, onChange) {
@@ -149,6 +158,7 @@ export function createUI() {
     bindSelect,
     bindRange,
     setControlsFromState,
+    setWakeLockStatus,
     bindCollapse,
     bindScrollHint,
     updateScrollHint,

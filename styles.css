@@ -244,6 +244,12 @@ label {
   line-height: 1.35;
 }
 
+#wakeLockStatus {
+  margin: -0.2rem 0 0.5rem;
+  font-size: 0.85em;
+  line-height: 1.35;
+}
+
 .controls-section h2 {
   font-size: inherit;
   margin: 0.35rem 0 0.45rem;
