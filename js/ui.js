@@ -73,7 +73,19 @@ export function createUI() {
 
   function setStatus(status, announcement, message, needsAttention) {
     if (status && status.textContent !== message) {
+      const focused = document.activeElement;
+      const keepVisible =
+        !refs.controls?.inert &&
+        refs.controls?.contains(focused) &&
+        isVisibleInPanel(focused);
       status.textContent = message;
+      if (keepVisible && !isVisibleInPanel(focused)) {
+        focused.scrollIntoView({
+          block: "nearest",
+          inline: "nearest",
+          behavior: "instant",
+        });
+      }
       updateScrollHint();
     }
     if (announcement) {
@@ -91,6 +103,12 @@ export function createUI() {
       if (refs.panelNotice.textContent !== notice)
         refs.panelNotice.textContent = notice;
     }
+  }
+
+  function isVisibleInPanel(element) {
+    const panel = refs.controls.getBoundingClientRect();
+    const rect = element.getBoundingClientRect();
+    return rect.top >= panel.top && rect.bottom <= panel.bottom;
   }
 
   function setWakeLockStatus(message, needsAttention = false) {

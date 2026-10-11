@@ -178,3 +178,62 @@ test("status announcements and a collapsed-panel notice survive independently of
   ui.setSoundStatus("Sound is playing.");
   assert.equal(elements.get("panelNotice").textContent, "");
 });
+
+for (const kind of ["wakeLock", "storage", "sound"]) {
+  for (const scenario of [
+    "moves below",
+    "moves above",
+    "stays visible",
+    "already scrolled away",
+    "focus outside",
+    "panel inert",
+  ]) {
+    test(`${kind} feedback preserves visible focus: ${scenario}`, (t) => {
+      let top = scenario === "already scrolled away" ? 220 : 100;
+      const scrolls = [];
+      const focused = {
+        getBoundingClientRect: () => ({ top, bottom: top + 40 }),
+        scrollIntoView(options) {
+          scrolls.push(options);
+          top = 100;
+        },
+      };
+      const controls = {
+        inert: scenario === "panel inert",
+        contains: (el) => el === focused && scenario !== "focus outside",
+        getBoundingClientRect: () => ({ top: 20, bottom: 200 }),
+        classList: { contains: () => false, toggle() {} },
+      };
+      const status = {
+        get textContent() {
+          return "";
+        },
+        set textContent(value) {
+          assert.equal(value, "Feedback changed.");
+          if (scenario !== "stays visible")
+            top = scenario === "moves above" ? 0 : 220;
+        },
+      };
+      installGlobals(t, {
+        document: {
+          activeElement: focused,
+          getElementById: (id) =>
+            id === "controls"
+              ? controls
+              : id === `${kind}Status`
+                ? status
+                : null,
+        },
+      });
+      createUI()[`set${kind[0].toUpperCase()}${kind.slice(1)}Status`](
+        "Feedback changed.",
+      );
+      assert.equal(scrolls.length, scenario.startsWith("moves") ? 1 : 0);
+      if (scenario.startsWith("moves")) {
+        const rect = focused.getBoundingClientRect();
+        assert.ok(rect.top >= 20 && rect.bottom <= 200);
+      }
+      assert.equal(document.activeElement, focused);
+    });
+  }
+}
