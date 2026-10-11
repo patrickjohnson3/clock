@@ -66,7 +66,11 @@ function updateSoundStatus() {
         ? "Sound is muted (volume is 0%)."
         : "Sound is playing.";
   }
-  ui.setSoundStatus(message);
+  ui.setSoundStatus(
+    message,
+    soundManager.hasEnabledSounds(state) &&
+      sharedAudioContext?.state !== "running",
+  );
 }
 
 window.addEventListener("pointerup", syncSharedAudioContext);
@@ -213,6 +217,7 @@ async function syncWakeLock(nextState) {
   if (!navigator.wakeLock) {
     ui.setWakeLockStatus(
       "Screen wake lock unavailable in this browser; the screen may sleep.",
+      true,
     );
     return;
   }
@@ -231,6 +236,7 @@ async function syncWakeLock(nextState) {
       wakeLockSentinel = null;
       ui.setWakeLockStatus(
         "Screen wake lock released; the screen may sleep. Toggle off and on to retry.",
+        true,
       );
     });
     ui.setWakeLockStatus("Screen wake lock active.");
@@ -239,6 +245,7 @@ async function syncWakeLock(nextState) {
     if (state.wakeLock && !document.hidden) {
       ui.setWakeLockStatus(
         "Screen wake lock request failed; the screen may sleep. Toggle off and on to retry.",
+        true,
       );
     }
   } finally {

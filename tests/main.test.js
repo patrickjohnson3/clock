@@ -65,6 +65,20 @@ function createAppEnvironment(t, savedSettings, { renderers = false } = {}) {
   controls.set("soundStatus", { textContent: "" });
   controls.set("clockScaleOutput", { value: "" });
   controls.set("soundVolumeOutput", { value: "" });
+  controls.set("panelNotice", { textContent: "" });
+  for (const key of ["wakeLock", "storage", "sound"]) {
+    const classes = new Set();
+    controls.set(`${key}Announcement`, {
+      textContent: "",
+      classList: {
+        toggle(name, enabled) {
+          if (enabled) classes.add(name);
+          else classes.delete(name);
+        },
+        contains: (name) => classes.has(name),
+      },
+    });
+  }
   function createElement(tagName) {
     return Object.assign(new EventTarget(), {
       tagName,
@@ -211,6 +225,9 @@ test("restored audio waits for playback permission and resumes without restartin
   assert.equal(context.bufferCount, 0);
   const status = document.getElementById("soundStatus");
   assert.match(status.textContent, /paused.*click or press a key/i);
+  const announcement = document.getElementById("soundAnnouncement");
+  assert.equal(announcement.textContent, status.textContent);
+  assert.equal(announcement.classList.contains("needs-attention"), true);
 
   context.allowResume = true;
   let playingSources;
@@ -219,6 +236,7 @@ test("restored audio waits for playback permission and resumes without restartin
     window.dispatchEvent(new Event(event));
     assert.equal(context.state, "running");
     assert.match(status.textContent, /playing/i);
+    assert.equal(announcement.classList.contains("needs-attention"), false);
     assert.equal(context.activeSources.length, 1);
     assert.equal(context.bufferCount, 1);
     playingSources ??= [...context.activeSources];
@@ -544,10 +562,14 @@ test("an unsupported wake lock is reported without changing the requested prefer
   await import("../js/main.js?unsupported-wake-status");
   const status = document.getElementById("wakeLockStatus");
   assert.match(status.textContent, /unavailable.*browser/i);
+  const announcement = document.getElementById("wakeLockAnnouncement");
+  assert.equal(announcement.textContent, status.textContent);
+  assert.equal(announcement.classList.contains("needs-attention"), true);
   assert.equal(window.matrixClock.getState().wakeLock, true);
   assert.equal(document.getElementById("wakeLockToggle").checked, true);
   setToggle("wakeLock", false);
   assert.match(status.textContent, /is off\.$/i);
+  assert.equal(announcement.classList.contains("needs-attention"), false);
 });
 
 test("wake lock denial reports failure and allows an explicit retry without changing the preference", async (t) => {
@@ -591,6 +613,9 @@ test("wake lock release is reported without retrying until the page resumes", as
   sentinel.released = true;
   sentinel.dispatchEvent(new Event("release"));
   assert.match(status.textContent, /released.*may sleep/i);
+  const announcement = document.getElementById("wakeLockAnnouncement");
+  assert.equal(announcement.textContent, status.textContent);
+  assert.equal(announcement.classList.contains("needs-attention"), true);
   window.advanceTime(5000);
   setToggle("hour24", true);
   assert.equal(requests.length, 1);
@@ -598,6 +623,7 @@ test("wake lock release is reported without retrying until the page resumes", as
   document.hidden = true;
   window.dispatchEvent(new Event("visibilitychange"));
   assert.match(status.textContent, /paused.*hidden/i);
+  assert.equal(announcement.classList.contains("needs-attention"), false);
   document.hidden = false;
   window.dispatchEvent(new Event("visibilitychange"));
   window.dispatchEvent(new Event("visibilitychange"));
@@ -880,6 +906,9 @@ for (const failure of ["preference", "payload", "remove"]) {
       }
       assert.match(status.textContent, /could not.*saved settings/i);
       assert.match(status.textContent, /retry/i);
+      const announcement = document.getElementById("storageAnnouncement");
+      assert.equal(announcement.textContent, status.textContent);
+      assert.equal(announcement.classList.contains("needs-attention"), true);
       assert.equal(window.matrixClock.getState().hour24, true);
       assert.equal(preference.checked, failure !== "remove");
       assert.equal(saved.get("unrelated"), "keep");
@@ -890,6 +919,8 @@ for (const failure of ["preference", "payload", "remove"]) {
       setToggle("leadingZero", true);
       window.advanceTime(120);
       assert.equal(status.textContent, "");
+      assert.equal(announcement.textContent, "");
+      assert.equal(announcement.classList.contains("needs-attention"), false);
       assert.equal(
         saved.get(STORAGE_ENABLED_KEY),
         String(failure !== "remove"),

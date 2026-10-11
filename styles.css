@@ -46,7 +46,39 @@ body {
 
 body {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+#panelNotice {
+  display: none;
+  grid-row: 3;
+  justify-self: center;
+  z-index: 2;
+  box-sizing: border-box;
+  max-width: min(96vw, 800px);
+  margin: 0.5rem;
+  margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
+  padding: 0.5rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  background: var(--panel-bg);
+  color: var(--panel-fg);
+  font-size: 0.85rem;
+}
+
+#controls.collapsed ~ #panelNotice:not(:empty) {
+  display: block;
 }
 
 canvas {

@@ -45,6 +45,9 @@ The top panel is grouped into 3 sections:
 Use `Hide Panel` to collapse the panel. Use the subtle top handle to reopen it.
 While open, the panel shares the screen with an unobscured clock preview. Scroll
 the panel to reach additional controls; hiding it restores the full-screen clock.
+Status changes remain available to assistive technology while the panel is hidden.
+If a warning needs attention, a compact notice prompts you to reopen the panel
+for details without covering the clock.
 
 `Remember settings on this device` is off by default. If saving fails, a warning
 appears below it without interrupting the clock. After resolving browser storage

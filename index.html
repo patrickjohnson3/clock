@@ -55,7 +55,7 @@
             />
             Keep Screen Awake</label
           >
-          <p id="wakeLockStatus" role="status"></p>
+          <p id="wakeLockStatus"></p>
           <label
             ><input
               type="checkbox"
@@ -64,7 +64,7 @@
             />
             Remember settings on this device</label
           >
-          <p id="storageStatus" role="status"></p>
+          <p id="storageStatus"></p>
           <h2>Clock</h2>
           <div class="range-control">
             <label for="clockScaleSlider">Clock Size (%)</label>
@@ -134,7 +134,7 @@
 
         <section class="controls-section">
           <h2>Sound</h2>
-          <p id="soundStatus" role="status"></p>
+          <p id="soundStatus"></p>
           <label
             ><input
               type="checkbox"
@@ -196,6 +196,12 @@
       </div>
     </div>
     <button id="panelTab" aria-label="Show panel" inert></button>
+    <div class="visually-hidden">
+      <p id="wakeLockAnnouncement" role="status"></p>
+      <p id="storageAnnouncement" role="status"></p>
+      <p id="soundAnnouncement" role="status"></p>
+    </div>
+    <p id="panelNotice"></p>
 
     <script type="module" src="app.js"></script>
   </body>

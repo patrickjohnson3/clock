@@ -130,3 +130,51 @@ test("sound status does not repeat an unchanged accessible message", (t) => {
   assert.equal(status.textContent, "Sound is playing.");
   assert.equal(writes, 2);
 });
+
+test("status announcements and a collapsed-panel notice survive independently of inert controls", (t) => {
+  const elements = new Map();
+  let announcementWrites = 0;
+  for (const key of ["wakeLock", "storage", "sound"]) {
+    elements.set(`${key}Status`, { textContent: "" });
+    let textContent = "";
+    const classes = new Set();
+    elements.set(`${key}Announcement`, {
+      get textContent() {
+        return textContent;
+      },
+      set textContent(value) {
+        textContent = value;
+        announcementWrites += 1;
+      },
+      classList: {
+        toggle(name, enabled) {
+          if (enabled) classes.add(name);
+          else classes.delete(name);
+        },
+        contains: (name) => classes.has(name),
+      },
+    });
+  }
+  elements.set("panelNotice", { textContent: "" });
+  installGlobals(t, {
+    document: { getElementById: (id) => elements.get(id) ?? null },
+  });
+  const ui = createUI();
+  ui.setStorageStatus("Could not save settings.");
+  assert.equal(
+    elements.get("storageAnnouncement").textContent,
+    "Could not save settings.",
+  );
+  assert.match(elements.get("panelNotice").textContent, /show panel/i);
+  ui.setStorageStatus("Could not save settings.");
+  assert.equal(announcementWrites, 1);
+  ui.setWakeLockStatus("Screen wake lock released.", true);
+  ui.setStorageStatus("");
+  assert.notEqual(elements.get("panelNotice").textContent, "");
+  ui.setWakeLockStatus("Screen wake lock active.");
+  assert.equal(elements.get("panelNotice").textContent, "");
+  ui.setSoundStatus("Sound is unavailable.", true);
+  assert.notEqual(elements.get("panelNotice").textContent, "");
+  ui.setSoundStatus("Sound is playing.");
+  assert.equal(elements.get("panelNotice").textContent, "");
+});

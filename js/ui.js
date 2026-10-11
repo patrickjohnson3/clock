@@ -10,6 +10,12 @@ export function createUI() {
     matrixModeHint: document.getElementById("matrixModeHint"),
     showAmPmHint: document.getElementById("showAmPmHint"),
     soundStatus: document.getElementById("soundStatus"),
+    panelNotice: document.getElementById("panelNotice"),
+    announcements: {
+      wakeLock: document.getElementById("wakeLockAnnouncement"),
+      storage: document.getElementById("storageAnnouncement"),
+      sound: document.getElementById("soundAnnouncement"),
+    },
     toggles: {
       glitch: document.getElementById("glitchToggle"),
       glyph: document.getElementById("glyphToggle"),
@@ -65,28 +71,53 @@ export function createUI() {
     });
   }
 
-  function setWakeLockStatus(message) {
-    const status = refs.wakeLockStatus;
+  function setStatus(status, announcement, message, needsAttention) {
     if (status && status.textContent !== message) {
       status.textContent = message;
       updateScrollHint();
     }
+    if (announcement) {
+      if (announcement.textContent !== message)
+        announcement.textContent = message;
+      announcement.classList.toggle("needs-attention", needsAttention);
+    }
+    if (refs.panelNotice) {
+      const hasWarning = Object.values(refs.announcements).some((el) =>
+        el?.classList.contains("needs-attention"),
+      );
+      const notice = hasWarning
+        ? "Attention needed. Show panel for details."
+        : "";
+      if (refs.panelNotice.textContent !== notice)
+        refs.panelNotice.textContent = notice;
+    }
+  }
+
+  function setWakeLockStatus(message, needsAttention = false) {
+    setStatus(
+      refs.wakeLockStatus,
+      refs.announcements.wakeLock,
+      message,
+      needsAttention,
+    );
   }
 
   function setStorageStatus(message) {
-    const status = refs.storageStatus;
-    if (status && status.textContent !== message) {
-      status.textContent = message;
-      updateScrollHint();
-    }
+    setStatus(
+      refs.storageStatus,
+      refs.announcements.storage,
+      message,
+      Boolean(message),
+    );
   }
 
-  function setSoundStatus(message) {
-    const status = refs.soundStatus;
-    if (status && status.textContent !== message) {
-      status.textContent = message;
-      updateScrollHint();
-    }
+  function setSoundStatus(message, needsAttention = false) {
+    setStatus(
+      refs.soundStatus,
+      refs.announcements.sound,
+      message,
+      needsAttention,
+    );
   }
 
   function bindSelect(selectEl, onChange) {
