@@ -81,8 +81,14 @@
             ><input type="checkbox" id="hour24Toggle" /> 24-Hour Mode</label
           >
           <label
-            ><input type="checkbox" id="showAmPmToggle" /> Show AM/PM</label
+            ><input
+              type="checkbox"
+              id="showAmPmToggle"
+              aria-describedby="showAmPmHint"
+            />
+            Show AM/PM</label
           >
+          <p id="showAmPmHint" hidden>AM/PM is only shown in 12-hour mode.</p>
           <label
             ><input type="checkbox" id="leadingZeroToggle" /> Leading
             Zero</label
@@ -95,8 +101,26 @@
 
         <section class="controls-section">
           <h2>Matrix</h2>
-          <label><input type="checkbox" id="matrixToggle" /> Matrix Rain</label>
-          <label><input type="checkbox" id="neonToggle" /> Neon FX</label>
+          <label
+            ><input
+              type="checkbox"
+              id="matrixToggle"
+              aria-describedby="matrixModeHint"
+            />
+            Matrix Rain</label
+          >
+          <label
+            ><input
+              type="checkbox"
+              id="neonToggle"
+              aria-describedby="matrixModeHint"
+            />
+            Neon FX</label
+          >
+          <p id="matrixModeHint" hidden>
+            Matrix mode keeps rain and neon on. Choose Dark or Light mode to
+            adjust them separately.
+          </p>
           <label><input type="checkbox" id="glowToggle" /> Clock Glow</label>
           <label><input type="checkbox" id="glitchToggle" /> Glitch FX</label>
           <label

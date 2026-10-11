@@ -256,7 +256,9 @@ label {
 }
 
 #wakeLockStatus,
-#storageStatus {
+#storageStatus,
+#matrixModeHint,
+#showAmPmHint {
   margin: -0.2rem 0 0.5rem;
   font-size: 0.85em;
   line-height: 1.35;

@@ -60,6 +60,8 @@ function createAppEnvironment(t, savedSettings, { renderers = false } = {}) {
   }
   controls.set("wakeLockStatus", { textContent: "" });
   controls.set("storageStatus", { textContent: "" });
+  controls.set("matrixModeHint", { hidden: true });
+  controls.set("showAmPmHint", { hidden: true });
   function createElement(tagName) {
     return Object.assign(new EventTarget(), {
       tagName,
@@ -612,6 +614,35 @@ test("normalized Matrix mode updates visuals and repairs forced controls", async
   assert.equal(window.matrixClock.getState().matrix, true);
   assert.equal(calls.bodyClasses, 0);
   assert.equal(calls.clockRenders, 0);
+});
+
+test("restored constraints disable controls until their governing modes change", async (t) => {
+  const { document, window, saved, setToggle } = createAppEnvironment(t, {
+    matrixMode: true,
+    hour24: true,
+    showAmPm: true,
+  });
+  await import("../js/main.js?restored-control-constraints");
+  for (const id of ["matrixToggle", "neonToggle", "showAmPmToggle"])
+    assert.equal(document.getElementById(id).disabled, true, id);
+  assert.equal(document.getElementById("matrixModeHint").hidden, false);
+  assert.equal(document.getElementById("showAmPmHint").hidden, false);
+
+  const mode = document.getElementById("modeSelect");
+  mode.value = "dark";
+  mode.dispatchEvent(new Event("change"));
+  setToggle("hour24", false);
+  for (const id of ["matrixToggle", "neonToggle", "showAmPmToggle"]) {
+    assert.equal(document.getElementById(id).disabled, false, id);
+    assert.equal(document.getElementById(id).checked, true, id);
+  }
+  window.advanceTime(120);
+  const payload = JSON.parse(saved.get(STORAGE_KEY));
+  assert.equal(payload.showAmPm, true);
+  assert.equal(payload.matrix, true);
+  assert.equal(payload.neon, true);
+  assert.equal(payload.hour24, false);
+  assert.equal(payload.matrixMode, false);
 });
 
 test("clock options still render immediately without touching the background", async (t) => {

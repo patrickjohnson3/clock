@@ -60,6 +60,10 @@ Use `Clock Size (%)` to enlarge the clock from 100% to 200% without changing its
 responsive default size. If enlarged text exceeds the screen, scroll the clock
 to reach the whole time; keyboard users can focus the clock and use arrow keys.
 
+Matrix mode keeps `Matrix Rain` and `Neon FX` enabled; choose Dark or Light mode
+to adjust them separately. `Show AM/PM` is unavailable in 24-hour mode, but its
+preference is retained when switching back to 12-hour mode.
+
 ## Project Structure
 
 - `index.html` - app shell and control markup

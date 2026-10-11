@@ -7,6 +7,8 @@ export function createUI() {
     panelTab: document.getElementById("panelTab"),
     wakeLockStatus: document.getElementById("wakeLockStatus"),
     storageStatus: document.getElementById("storageStatus"),
+    matrixModeHint: document.getElementById("matrixModeHint"),
+    showAmPmHint: document.getElementById("showAmPmHint"),
     toggles: {
       glitch: document.getElementById("glitchToggle"),
       glyph: document.getElementById("glyphToggle"),
@@ -41,6 +43,13 @@ export function createUI() {
   function setValue(el, value) {
     if (el && el.value !== value) {
       el.value = value;
+    }
+  }
+
+  function setHidden(el, hidden) {
+    if (el && el.hidden !== hidden) {
+      el.hidden = hidden;
+      updateScrollHint();
     }
   }
 
@@ -91,6 +100,11 @@ export function createUI() {
     for (const [key, toggle] of Object.entries(refs.toggles)) {
       setChecked(toggle, state[key]);
     }
+    if (refs.toggles.matrix) refs.toggles.matrix.disabled = state.matrixMode;
+    if (refs.toggles.neon) refs.toggles.neon.disabled = state.matrixMode;
+    if (refs.toggles.showAmPm) refs.toggles.showAmPm.disabled = state.hour24;
+    setHidden(refs.matrixModeHint, !state.matrixMode);
+    setHidden(refs.showAmPmHint, !state.hour24);
     setValue(refs.soundVolumeSlider, String(state.soundVolume));
     setValue(refs.clockScaleSlider, String(state.clockScale));
 

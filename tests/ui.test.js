@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { DEFAULTS } from "../js/config.js";
 import { createUI } from "../js/ui.js";
+import { normalizeState } from "../js/state.js";
 import { installGlobals } from "./helpers/audio.js";
 
 test("the toggle map covers the HTML checkboxes and synchronizes every state key", async (t) => {
@@ -62,4 +63,44 @@ test("wake lock status updates do not repeat an unchanged accessible message", (
   ui.setWakeLockStatus("Screen wake lock is off.");
   assert.equal(status.textContent, "Screen wake lock is off.");
   assert.equal(writes, 2);
+});
+
+test("constrained controls explain their disabled state without discarding preferences", (t) => {
+  const elements = new Map(
+    ["matrixToggle", "neonToggle", "showAmPmToggle"].map((id) => [
+      id,
+      { checked: false, disabled: false },
+    ]),
+  );
+  elements.set("matrixModeHint", { hidden: true });
+  elements.set("showAmPmHint", { hidden: true });
+  installGlobals(t, {
+    document: { getElementById: (id) => elements.get(id) ?? null },
+  });
+  const ui = createUI();
+  let state = normalizeState({ ...DEFAULTS, showAmPm: true });
+  ui.setControlsFromState(state);
+  for (const id of ["matrixToggle", "neonToggle", "showAmPmToggle"])
+    assert.equal(elements.get(id).disabled, false, id);
+  assert.equal(elements.get("matrixModeHint").hidden, true);
+  assert.equal(elements.get("showAmPmHint").hidden, true);
+
+  state = normalizeState({ ...state, matrixMode: true, hour24: true });
+  ui.setControlsFromState(state);
+  for (const id of ["matrixToggle", "neonToggle", "showAmPmToggle"]) {
+    assert.equal(elements.get(id).disabled, true, id);
+    assert.equal(elements.get(id).checked, true, id);
+  }
+  assert.equal(elements.get("matrixModeHint").hidden, false);
+  assert.equal(elements.get("showAmPmHint").hidden, false);
+  assert.equal(state.showAmPm, true);
+
+  state = normalizeState({ ...state, matrixMode: false, hour24: false });
+  ui.setControlsFromState(state);
+  for (const id of ["matrixToggle", "neonToggle", "showAmPmToggle"]) {
+    assert.equal(elements.get(id).disabled, false, id);
+    assert.equal(elements.get(id).checked, true, id);
+  }
+  assert.equal(elements.get("matrixModeHint").hidden, true);
+  assert.equal(elements.get("showAmPmHint").hidden, true);
 });
