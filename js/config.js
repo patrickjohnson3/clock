@@ -26,6 +26,7 @@ export const DEFAULTS = {
   hideSeconds: false,
   clockScale: 100,
   matrix: false,
+  reducedMotion: false,
   glow: false,
   neon: false,
   brownNoise: false,

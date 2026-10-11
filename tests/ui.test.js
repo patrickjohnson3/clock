@@ -134,7 +134,7 @@ test("sound status does not repeat an unchanged accessible message", (t) => {
 test("status announcements and a collapsed-panel notice survive independently of inert controls", (t) => {
   const elements = new Map();
   let announcementWrites = 0;
-  for (const key of ["wakeLock", "storage", "sound", "fullscreen"]) {
+  for (const key of ["wakeLock", "storage", "sound", "fullscreen", "matrix"]) {
     elements.set(`${key}Status`, { textContent: "" });
     let textContent = "";
     const classes = new Set();
@@ -185,9 +185,20 @@ test("status announcements and a collapsed-panel notice survive independently of
   assert.notEqual(elements.get("panelNotice").textContent, "");
   ui.setFullscreenStatus("");
   assert.equal(elements.get("panelNotice").textContent, "");
+  const beforeMatrix = announcementWrites;
+  ui.setMatrixStatus("Matrix Rain is paused because Reduced Motion is on.");
+  ui.setMatrixStatus("Matrix Rain is paused because Reduced Motion is on.");
+  assert.equal(announcementWrites, beforeMatrix + 1);
+  assert.equal(
+    elements.get("matrixAnnouncement").textContent,
+    "Matrix Rain is paused because Reduced Motion is on.",
+  );
+  assert.notEqual(elements.get("panelNotice").textContent, "");
+  ui.setMatrixStatus("");
+  assert.equal(elements.get("panelNotice").textContent, "");
 });
 
-for (const kind of ["wakeLock", "storage", "sound", "fullscreen"]) {
+for (const kind of ["wakeLock", "storage", "sound", "fullscreen", "matrix"]) {
   for (const scenario of [
     "moves below",
     "moves above",

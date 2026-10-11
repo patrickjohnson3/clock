@@ -113,10 +113,6 @@ let wakeLockSentinel = null;
 let wakeLockRequest = null;
 let webFontsRequested = false;
 let fullscreenRequestId = 0;
-const motionPreference = window.matchMedia?.(
-  "(prefers-reduced-motion: reduce)",
-);
-motionPreference?.addEventListener("change", syncMatrix);
 ui.setControlsFromState(state);
 updateFullscreenAvailability();
 ui.updateScrollHint();
@@ -134,13 +130,19 @@ function renderVisuals(nextState) {
   document.body.classList.toggle("matrix-mode", nextState.matrixMode);
   document.body.classList.toggle("glow-on", nextState.glow);
   document.body.classList.toggle("neon-on", nextState.neon);
+  document.body.classList.toggle("reduced-motion", nextState.reducedMotion);
   document.body.style.fontFamily = nextState.font;
   matrix.refreshStyles();
   syncMatrix();
 }
 
 function syncMatrix() {
-  if (state.matrix && !document.hidden && !motionPreference?.matches) {
+  ui.setMatrixStatus(
+    state.matrix && state.reducedMotion
+      ? "Matrix Rain is paused because Reduced Motion is on. Turn off Reduced Motion to see the rain."
+      : "",
+  );
+  if (state.matrix && !document.hidden && !state.reducedMotion) {
     matrix.start();
   } else {
     matrix.stop();
@@ -316,6 +318,7 @@ function updateState(partial) {
     state.lightMode !== previous.lightMode ||
     state.matrixMode !== previous.matrixMode ||
     state.matrix !== previous.matrix ||
+    state.reducedMotion !== previous.reducedMotion ||
     state.glow !== previous.glow ||
     state.neon !== previous.neon;
   if (visualsChanged) {

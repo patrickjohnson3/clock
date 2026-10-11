@@ -78,6 +78,30 @@ test("legacy time options migrate and current options take precedence", (t) => {
   }
 });
 
+test("Reduced Motion defaults off, validates saved values, and persists only by opt-in", (t) => {
+  const saved = installStorage(t, [[STORAGE_ENABLED_KEY, "true"]]);
+  for (const payload of [
+    {},
+    { reducedMotion: false },
+    { reducedMotion: "true" },
+    { reducedMotion: 1 },
+    { reducedMotion: null },
+  ]) {
+    saved.set(STORAGE_KEY, JSON.stringify(payload));
+    assert.equal(loadSettings().reducedMotion, false);
+  }
+  assert.equal(
+    saveSettings({ ...DEFAULTS, reducedMotion: true, persistStorage: true }),
+    true,
+  );
+  assert.equal(loadSettings().reducedMotion, true);
+  assert.equal(
+    saveSettings({ ...DEFAULTS, reducedMotion: true, persistStorage: false }),
+    true,
+  );
+  assert.equal(loadSettings().reducedMotion, false);
+});
+
 test("loading applies mode and numeric invariants but never restores fullscreen", (t) => {
   installStorage(t, [
     [STORAGE_ENABLED_KEY, "true"],

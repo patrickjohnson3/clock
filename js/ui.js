@@ -11,12 +11,14 @@ export function createUI() {
     showAmPmHint: document.getElementById("showAmPmHint"),
     soundStatus: document.getElementById("soundStatus"),
     fullscreenStatus: document.getElementById("fullscreenStatus"),
+    matrixStatus: document.getElementById("matrixStatus"),
     panelNotice: document.getElementById("panelNotice"),
     announcements: {
       wakeLock: document.getElementById("wakeLockAnnouncement"),
       storage: document.getElementById("storageAnnouncement"),
       sound: document.getElementById("soundAnnouncement"),
       fullscreen: document.getElementById("fullscreenAnnouncement"),
+      matrix: document.getElementById("matrixAnnouncement"),
     },
     toggles: {
       glitch: document.getElementById("glitchToggle"),
@@ -26,6 +28,7 @@ export function createUI() {
       leadingZero: document.getElementById("leadingZeroToggle"),
       hideSeconds: document.getElementById("hideSecondsToggle"),
       matrix: document.getElementById("matrixToggle"),
+      reducedMotion: document.getElementById("reducedMotionToggle"),
       glow: document.getElementById("glowToggle"),
       neon: document.getElementById("neonToggle"),
       brownNoise: document.getElementById("brownNoiseToggle"),
@@ -149,6 +152,15 @@ export function createUI() {
     );
   }
 
+  function setMatrixStatus(message) {
+    setStatus(
+      refs.matrixStatus,
+      refs.announcements.matrix,
+      message,
+      Boolean(message),
+    );
+  }
+
   function bindSelect(selectEl, onChange) {
     if (!selectEl) {
       return;
@@ -258,6 +270,7 @@ export function createUI() {
     setStorageStatus,
     setSoundStatus,
     setFullscreenStatus,
+    setMatrixStatus,
     bindCollapse,
     bindScrollHint,
     updateScrollHint,

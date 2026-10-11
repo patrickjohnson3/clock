@@ -10,6 +10,7 @@ export function normalizeState(state) {
     font: FONT_FAMILIES.includes(state.font) ? state.font : SYSTEM_FONT,
     leadingZero: Boolean(state.leadingZero),
     hideSeconds: Boolean(state.hideSeconds),
+    reducedMotion: Boolean(state.reducedMotion),
     clockScale: Number.isFinite(state.clockScale)
       ? Math.max(100, Math.min(200, state.clockScale))
       : 100,

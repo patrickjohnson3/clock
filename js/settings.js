@@ -53,6 +53,10 @@ export function loadSettings() {
       ? saved.clockScale
       : DEFAULTS.clockScale,
     matrix: typeof saved.matrix === "boolean" ? saved.matrix : DEFAULTS.matrix,
+    reducedMotion:
+      typeof saved.reducedMotion === "boolean"
+        ? saved.reducedMotion
+        : DEFAULTS.reducedMotion,
     glow: typeof saved.glow === "boolean" ? saved.glow : DEFAULTS.glow,
     neon: typeof saved.neon === "boolean" ? saved.neon : DEFAULTS.neon,
     brownNoise:

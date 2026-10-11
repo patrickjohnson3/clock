@@ -66,10 +66,11 @@ function createAppEnvironment(t, savedSettings, { renderers = false } = {}) {
   controls.set("showAmPmHint", { hidden: true });
   controls.set("soundStatus", { textContent: "" });
   controls.set("fullscreenStatus", { textContent: "" });
+  controls.set("matrixStatus", { textContent: "" });
   controls.set("clockScaleOutput", { value: "" });
   controls.set("soundVolumeOutput", { value: "" });
   controls.set("panelNotice", { textContent: "" });
-  for (const key of ["wakeLock", "storage", "sound", "fullscreen"]) {
+  for (const key of ["wakeLock", "storage", "sound", "fullscreen", "matrix"]) {
     const classes = new Set();
     controls.set(`${key}Announcement`, {
       textContent: "",
@@ -740,21 +741,42 @@ test("restored constraints disable controls until their governing modes change",
   assert.equal(payload.matrixMode, false);
 });
 
+test("Matrix Rain defaults to normal motion even when the system requests reduced motion", async (t) => {
+  const { window, document, storageWrites } = createAppEnvironment(
+    t,
+    { matrix: true },
+    { renderers: true },
+  );
+  const preference = Object.assign(new EventTarget(), { matches: true });
+  window.matchMedia = () => preference;
+  let frames = 0;
+  const canvas = document.getElementById("matrix");
+  const context = canvas.getContext();
+  context.fillRect = () => frames++;
+  canvas.getContext = () => context;
+  await import("../js/main.js?default-app-motion");
+  window.advanceTime(TUNING.matrix.intervalMs);
+  assert.equal(frames, 1);
+  assert.equal(window.matrixClock.getState().reducedMotion, false);
+  assert.equal(document.getElementById("reducedMotionToggle").checked, false);
+  for (const matches of [false, true]) {
+    preference.matches = matches;
+    preference.dispatchEvent(new Event("change"));
+  }
+  window.advanceTime(TUNING.matrix.intervalMs);
+  assert.equal(frames, 2);
+  assert.equal(window.pendingTimerCount, 2);
+  assert.equal(storageWrites.length, 0);
+});
+
 for (const initiallyReduced of [true, false]) {
-  test(`Matrix respects reduced motion across startup and resume (${initiallyReduced})`, async (t) => {
-    const { window, document, saved, storageWrites, setToggle } =
-      createAppEnvironment(t, { matrixMode: true }, { renderers: true });
-    const preference = Object.assign(new EventTarget(), {
-      matches: initiallyReduced,
-    });
-    window.matchMedia = (query) => {
-      assert.equal(query, "(prefers-reduced-motion: reduce)");
-      return preference;
-    };
-    const setReduced = (matches) => {
-      preference.matches = matches;
-      preference.dispatchEvent(new Event("change"));
-    };
+  test(`Matrix respects the app's reduced-motion setting across startup and resume (${initiallyReduced})`, async (t) => {
+    const { window, document, saved, setToggle } = createAppEnvironment(
+      t,
+      { matrixMode: true, reducedMotion: initiallyReduced },
+      { renderers: true },
+    );
+    const setReduced = (checked) => setToggle("reducedMotion", checked);
     let frames = 0;
     const canvas = document.getElementById("matrix");
     const context = canvas.getContext();
@@ -764,23 +786,31 @@ for (const initiallyReduced of [true, false]) {
     window.advanceTime(TUNING.matrix.intervalMs);
     assert.equal(frames, initiallyReduced ? 0 : 1);
     assert.equal(window.pendingTimerCount, initiallyReduced ? 1 : 2);
+    const status = document.getElementById("matrixStatus");
+    const announcement = document.getElementById("matrixAnnouncement");
+    assert.equal(Boolean(status.textContent), initiallyReduced);
 
     const beforePause = frames;
     setReduced(true);
     setReduced(true);
-    window.advanceTime(2 * TUNING.matrix.intervalMs);
+    window.advanceTime(120);
     assert.equal(frames, beforePause);
     assert.equal(window.pendingTimerCount, 1);
+    assert.match(status.textContent, /matrix rain.*paused.*reduced motion/i);
+    assert.match(status.textContent, /turn off reduced motion/i);
+    assert.equal(announcement.textContent, status.textContent);
+    assert.equal(announcement.classList.contains("needs-attention"), true);
 
     document.hidden = true;
     window.dispatchEvent(new Event("visibilitychange"));
     setReduced(false);
     setReduced(false);
-    window.advanceTime(2 * TUNING.matrix.intervalMs);
+    window.advanceTime(120);
     assert.equal(frames, beforePause);
     assert.equal(window.pendingTimerCount, 0);
 
     setReduced(true);
+    window.advanceTime(120);
     document.hidden = false;
     window.dispatchEvent(new Event("visibilitychange"));
     window.advanceTime(2 * TUNING.matrix.intervalMs);
@@ -789,34 +819,73 @@ for (const initiallyReduced of [true, false]) {
 
     setReduced(false);
     setReduced(false);
+    window.advanceTime(120);
+    const resumedFrames = frames;
     window.advanceTime(TUNING.matrix.intervalMs);
-    assert.equal(frames, beforePause + 1);
+    assert.equal(frames, resumedFrames + 1);
     assert.equal(window.pendingTimerCount, 2);
-    assert.equal(storageWrites.length, 0);
+    assert.equal(status.textContent, "");
+    assert.equal(announcement.textContent, "");
+    assert.equal(announcement.classList.contains("needs-attention"), false);
 
     setReduced(true);
     setToggle("glow", true);
     window.advanceTime(120);
-    assert.equal(frames, beforePause + 1);
-    for (const key of ["matrix", "matrixMode", "neon"]) {
+    assert.equal(frames, resumedFrames + 1);
+    for (const key of ["matrix", "matrixMode", "neon", "reducedMotion"]) {
       assert.equal(window.matrixClock.getState()[key], true, key);
       assert.equal(JSON.parse(saved.get(STORAGE_KEY))[key], true, key);
     }
     assert.equal(document.getElementById("matrixToggle").disabled, true);
+    assert.equal(
+      document.getElementById("reducedMotionToggle").disabled,
+      false,
+    );
 
     const mode = document.getElementById("modeSelect");
     mode.value = "dark";
     mode.dispatchEvent(new Event("change"));
     setToggle("matrix", false);
     window.advanceTime(120);
+    assert.equal(status.textContent, "");
+    assert.equal(announcement.textContent, "");
+    assert.equal(window.matrixClock.getState().reducedMotion, true);
     setReduced(false);
+    window.advanceTime(120);
     window.advanceTime(TUNING.matrix.intervalMs);
-    assert.equal(frames, beforePause + 1);
+    assert.equal(frames, resumedFrames + 1);
     assert.equal(window.pendingTimerCount, 1);
 
     setToggle("matrix", true);
     window.advanceTime(2 * TUNING.matrix.intervalMs);
-    assert.equal(frames, beforePause + 3);
+    assert.equal(frames, resumedFrames + 3);
+  });
+}
+
+for (const selection of ["rain", "Matrix mode"]) {
+  test(`selecting ${selection} with Reduced Motion on reports the conflict`, async (t) => {
+    const { document, window, setToggle } = createAppEnvironment(t, {
+      reducedMotion: true,
+    });
+    await import(`../js/main.js?matrix-motion-conflict-${selection}`);
+    const status = document.getElementById("matrixStatus");
+    const announcement = document.getElementById("matrixAnnouncement");
+    assert.equal(status.textContent, "");
+    if (selection === "rain") {
+      setToggle("matrix", true);
+    } else {
+      const mode = document.getElementById("modeSelect");
+      mode.value = "matrix";
+      mode.dispatchEvent(new Event("change"));
+    }
+    assert.equal(window.matrixClock.getState().matrix, true);
+    assert.equal(document.getElementById("matrixToggle").checked, true);
+    assert.match(status.textContent, /matrix rain.*paused.*reduced motion/i);
+    assert.equal(announcement.textContent, status.textContent);
+    assert.equal(announcement.classList.contains("needs-attention"), true);
+    setToggle("reducedMotion", false);
+    assert.equal(status.textContent, "");
+    assert.equal(announcement.textContent, "");
   });
 }
 

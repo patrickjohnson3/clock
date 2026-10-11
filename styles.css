@@ -311,6 +311,7 @@ label {
 #wakeLockStatus,
 #storageStatus,
 #fullscreenStatus,
+#matrixStatus,
 #matrixModeHint,
 #showAmPmHint,
 #soundStatus {
@@ -320,7 +321,8 @@ label {
 }
 
 #storageStatus:empty,
-#fullscreenStatus:empty {
+#fullscreenStatus:empty,
+#matrixStatus:empty {
   display: none;
 }
 
@@ -615,18 +617,16 @@ body.light-mode #controls option:hover {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .glitch {
-    animation: none;
-  }
+body.reduced-motion .glitch {
+  animation: none;
+}
 
-  #controls.show-scroll-hint::before {
-    animation: none;
-  }
+body.reduced-motion #controls.show-scroll-hint::before {
+  animation: none;
+}
 
-  #controls,
-  #panelTab,
-  #panelTab::before {
-    transition: none;
-  }
+body.reduced-motion #controls,
+body.reduced-motion #panelTab,
+body.reduced-motion #panelTab::before {
+  transition: none;
 }

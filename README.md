@@ -72,9 +72,14 @@ Clock Size and Sound Volume show their current percentages beside their labels.
 Matrix mode keeps `Matrix Rain` and `Neon FX` enabled; choose Dark or Light mode
 to adjust them separately. `Show AM/PM` is unavailable in 24-hour mode, but its
 preference is retained when switching back to 12-hour mode.
-When the system requests reduced motion, Matrix rain is suppressed without
-changing your selections. It resumes when that preference is turned off if
-Matrix rain is still enabled and the page is visible.
+
+`Reduced Motion` in the Matrix section is off by default, independently of the
+system's motion preference. Turning it on pauses Matrix rain and disables glitch
+animation, the scroll hint's motion, and panel transitions. If Matrix Rain is
+selected while Reduced Motion is on, a visible and announced warning explains
+the conflict. Rain resumes when Reduced Motion is turned off if rain is still
+selected and the page is visible. This setting is saved only when remembering
+settings is enabled.
 
 The Sound status distinguishes playing, muted, paused, off, and unavailable audio.
 If restored sounds are paused by the browser, click or press a key to try playback.

@@ -113,11 +113,20 @@
           <label
             ><input
               type="checkbox"
+              id="reducedMotionToggle"
+              aria-describedby="matrixStatus"
+            />
+            Reduced Motion</label
+          >
+          <label
+            ><input
+              type="checkbox"
               id="matrixToggle"
-              aria-describedby="matrixModeHint"
+              aria-describedby="matrixModeHint matrixStatus"
             />
             Matrix Rain</label
           >
+          <p id="matrixStatus"></p>
           <label
             ><input
               type="checkbox"
@@ -207,6 +216,7 @@
       <p id="storageAnnouncement" role="status"></p>
       <p id="soundAnnouncement" role="status"></p>
       <p id="fullscreenAnnouncement" role="status"></p>
+      <p id="matrixAnnouncement" role="status"></p>
     </div>
     <p id="panelNotice"></p>
 
