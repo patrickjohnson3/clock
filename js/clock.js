@@ -84,6 +84,7 @@ export function createClock({ container, chars, tuning }) {
 
     const span = document.createElement("span");
     span.className = "digit";
+    span.setAttribute("aria-hidden", "true");
     span.addEventListener("mouseenter", () => {
       if (span.dataset.glitchEnabled === "true") {
         span.classList.add("glitch");
@@ -118,6 +119,9 @@ export function createClock({ container, chars, tuning }) {
       );
     }
     const time = formatTime(new Date(), state);
+    if (container) {
+      container.setAttribute("aria-label", time);
+    }
 
     for (let i = 0; i < time.length; i += 1) {
       const char = time[i];

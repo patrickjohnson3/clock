@@ -83,6 +83,7 @@ function createAppEnvironment(t, savedSettings, { renderers = false } = {}) {
       }),
     });
     controls.set("clock", {
+      setAttribute() {},
       style: {
         setProperty() {
           calls.clockRenders += 1;
