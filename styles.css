@@ -262,18 +262,18 @@ label {
 }
 
 #panelTab {
+  --handle-height: 12px;
   position: fixed;
   top: 0;
   top: env(safe-area-inset-top, 0px);
   left: 50%;
   z-index: 3;
-  background: var(--panel-bg);
+  background: transparent;
   color: var(--panel-fg);
-  border: 1px solid var(--panel-border);
-  border-top: 0;
+  border: 0;
   border-radius: 0 0 8px 8px;
   width: 76px;
-  height: 12px;
+  height: 44px;
   padding: 0;
   font-size: 0;
   font-weight: 700;
@@ -287,8 +287,20 @@ label {
   transform: translateX(-50%) translateY(-120%);
   transition:
     opacity 0.2s ease,
-    transform 0.2s ease,
-    height 0.2s ease;
+    transform 0.2s ease;
+}
+
+#panelTab::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: var(--handle-height);
+  box-sizing: border-box;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-top: 0;
+  border-radius: inherit;
+  transition: height 0.2s ease;
 }
 
 :fullscreen #panelTab,
@@ -322,7 +334,7 @@ label {
 #controls.collapsed + #panelTab:hover,
 #controls.collapsed + #panelTab:focus-visible {
   opacity: 0.7;
-  height: 16px;
+  --handle-height: 16px;
 }
 
 #panelTab:focus-visible {
@@ -482,8 +494,8 @@ body.light-mode #controls option:hover {
   }
 
   #panelTab {
+    --handle-height: 14px;
     width: 64px;
-    height: 14px;
     border-radius: 0 0 10px 10px;
   }
 
@@ -499,7 +511,7 @@ body.light-mode #controls option:hover {
   #controls.collapsed + #panelTab:hover,
   #controls.collapsed + #panelTab:focus-visible {
     opacity: 0.82;
-    height: 20px;
+    --handle-height: 20px;
   }
 
   :fullscreen #panelTab,
@@ -535,7 +547,8 @@ body.light-mode #controls option:hover {
   }
 
   #controls,
-  #panelTab {
+  #panelTab,
+  #panelTab::before {
     transition: none;
   }
 }
