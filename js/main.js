@@ -324,6 +324,7 @@ startClockTicker();
 
 window.addEventListener("visibilitychange", () => {
   if (document.hidden) {
+    flushSave();
     stopClockTicker();
     matrix.stop();
     syncWakeLock(state);

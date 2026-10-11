@@ -567,32 +567,68 @@ test("settings saves are debounced and pending changes flush on unload", async (
   assert.equal(storageWrites.length, 4);
 });
 
-for (const alreadySaved of [false, true]) {
-  for (const optedOut of [false, true]) {
-    test(`unload preserves another tab's ${optedOut ? "opt-out" : "settings"} ${alreadySaved ? "after saving" : "without edits"}`, async (t) => {
-      const { window, saved, storageWrites, setToggle } = createAppEnvironment(
-        t,
-        {
-          hour24: false,
-        },
-      );
-      await import(`../js/main.js?clean-unload-${alreadySaved}-${optedOut}`);
-      if (alreadySaved) {
-        setToggle("leadingZero", true);
-        window.advanceTime(120);
-      }
+for (const optOut of [false, true]) {
+  test(`backgrounding flushes a pending ${optOut ? "persistence opt-out" : "setting change"} before timers can freeze`, async (t) => {
+    const { document, window, saved, storageWrites, setToggle } =
+      createAppEnvironment(t, { hour24: false });
+    await import(`../js/main.js?pending-background-${optOut}`);
+    saved.set("unrelated", "keep");
+    if (optOut) {
+      const storage = document.getElementById("storageToggle");
+      storage.checked = false;
+      storage.dispatchEvent(new Event("change"));
+    } else {
+      setToggle("hour24", true);
+    }
+    window.advanceTime(5);
+    assert.equal(storageWrites.length, 0);
 
-      // Simulate a newer write from a different tab on the same origin.
-      saved.set(STORAGE_ENABLED_KEY, JSON.stringify(!optedOut));
-      if (optedOut) saved.delete(STORAGE_KEY);
-      else saved.set(STORAGE_KEY, JSON.stringify({ hour24: true }));
-      const newerSettings = new Map(saved);
-      const writeCount = storageWrites.length;
+    document.hidden = true;
+    window.dispatchEvent(new Event("visibilitychange"));
 
-      window.dispatchEvent(new Event("beforeunload"));
+    assert.equal(storageWrites.length, 2);
+    assert.equal(saved.get(STORAGE_ENABLED_KEY), String(!optOut));
+    if (optOut) assert.equal(saved.has(STORAGE_KEY), false);
+    else assert.equal(JSON.parse(saved.get(STORAGE_KEY)).hour24, true);
+    assert.equal(saved.get("unrelated"), "keep");
+    assert.equal(window.pendingTimerCount, 0);
 
-      assert.equal(storageWrites.length, writeCount);
-      assert.deepEqual(saved, newerSettings);
-    });
+    document.hidden = false;
+    window.dispatchEvent(new Event("visibilitychange"));
+    window.advanceTime(200);
+    assert.equal(storageWrites.length, 2);
+  });
+}
+
+for (const event of ["beforeunload", "visibilitychange"]) {
+  for (const alreadySaved of [false, true]) {
+    for (const optedOut of [false, true]) {
+      test(`${event} preserves another tab's ${optedOut ? "opt-out" : "settings"} ${alreadySaved ? "after saving" : "without edits"}`, async (t) => {
+        const { document, window, saved, storageWrites, setToggle } =
+          createAppEnvironment(t, {
+            hour24: false,
+          });
+        await import(
+          `../js/main.js?clean-${event}-${alreadySaved}-${optedOut}`
+        );
+        if (alreadySaved) {
+          setToggle("leadingZero", true);
+          window.advanceTime(120);
+        }
+
+        // Simulate a newer write from a different tab on the same origin.
+        saved.set(STORAGE_ENABLED_KEY, JSON.stringify(!optedOut));
+        if (optedOut) saved.delete(STORAGE_KEY);
+        else saved.set(STORAGE_KEY, JSON.stringify({ hour24: true }));
+        const newerSettings = new Map(saved);
+        const writeCount = storageWrites.length;
+
+        document.hidden = true;
+        window.dispatchEvent(new Event(event));
+
+        assert.equal(storageWrites.length, writeCount);
+        assert.deepEqual(saved, newerSettings);
+      });
+    }
   }
 }
