@@ -6,6 +6,7 @@ import {
   STORAGE_ENABLED_KEY,
   STORAGE_KEY,
   SYSTEM_FONT,
+  TUNING,
 } from "../js/config.js";
 import {
   createAudioContext,
@@ -735,6 +736,102 @@ test("restored constraints disable controls until their governing modes change",
   assert.equal(payload.neon, true);
   assert.equal(payload.hour24, false);
   assert.equal(payload.matrixMode, false);
+});
+
+for (const initiallyReduced of [true, false]) {
+  test(`Matrix respects reduced motion across startup and resume (${initiallyReduced})`, async (t) => {
+    const { window, document, saved, storageWrites, setToggle } =
+      createAppEnvironment(t, { matrixMode: true }, { renderers: true });
+    const preference = Object.assign(new EventTarget(), {
+      matches: initiallyReduced,
+    });
+    window.matchMedia = (query) => {
+      assert.equal(query, "(prefers-reduced-motion: reduce)");
+      return preference;
+    };
+    const setReduced = (matches) => {
+      preference.matches = matches;
+      preference.dispatchEvent(new Event("change"));
+    };
+    let frames = 0;
+    const canvas = document.getElementById("matrix");
+    const context = canvas.getContext();
+    context.fillRect = () => frames++;
+    canvas.getContext = () => context;
+    await import(`../js/main.js?reduced-motion-${initiallyReduced}`);
+    window.advanceTime(TUNING.matrix.intervalMs);
+    assert.equal(frames, initiallyReduced ? 0 : 1);
+    assert.equal(window.pendingTimerCount, initiallyReduced ? 1 : 2);
+
+    const beforePause = frames;
+    setReduced(true);
+    setReduced(true);
+    window.advanceTime(2 * TUNING.matrix.intervalMs);
+    assert.equal(frames, beforePause);
+    assert.equal(window.pendingTimerCount, 1);
+
+    document.hidden = true;
+    window.dispatchEvent(new Event("visibilitychange"));
+    setReduced(false);
+    setReduced(false);
+    window.advanceTime(2 * TUNING.matrix.intervalMs);
+    assert.equal(frames, beforePause);
+    assert.equal(window.pendingTimerCount, 0);
+
+    setReduced(true);
+    document.hidden = false;
+    window.dispatchEvent(new Event("visibilitychange"));
+    window.advanceTime(2 * TUNING.matrix.intervalMs);
+    assert.equal(frames, beforePause);
+    assert.equal(window.pendingTimerCount, 1);
+
+    setReduced(false);
+    setReduced(false);
+    window.advanceTime(TUNING.matrix.intervalMs);
+    assert.equal(frames, beforePause + 1);
+    assert.equal(window.pendingTimerCount, 2);
+    assert.equal(storageWrites.length, 0);
+
+    setReduced(true);
+    setToggle("glow", true);
+    window.advanceTime(120);
+    assert.equal(frames, beforePause + 1);
+    for (const key of ["matrix", "matrixMode", "neon"]) {
+      assert.equal(window.matrixClock.getState()[key], true, key);
+      assert.equal(JSON.parse(saved.get(STORAGE_KEY))[key], true, key);
+    }
+    assert.equal(document.getElementById("matrixToggle").disabled, true);
+
+    const mode = document.getElementById("modeSelect");
+    mode.value = "dark";
+    mode.dispatchEvent(new Event("change"));
+    setToggle("matrix", false);
+    window.advanceTime(120);
+    setReduced(false);
+    window.advanceTime(TUNING.matrix.intervalMs);
+    assert.equal(frames, beforePause + 1);
+    assert.equal(window.pendingTimerCount, 1);
+
+    setToggle("matrix", true);
+    window.advanceTime(2 * TUNING.matrix.intervalMs);
+    assert.equal(frames, beforePause + 3);
+  });
+}
+
+test("Matrix still runs when matchMedia is unavailable", async (t) => {
+  const { window, document } = createAppEnvironment(
+    t,
+    { matrix: true },
+    { renderers: true },
+  );
+  let frames = 0;
+  const canvas = document.getElementById("matrix");
+  const context = canvas.getContext();
+  context.fillRect = () => frames++;
+  canvas.getContext = () => context;
+  await import("../js/main.js?matrix-without-match-media");
+  window.advanceTime(TUNING.matrix.intervalMs);
+  assert.equal(frames, 1);
 });
 
 test("clock options still render immediately without touching the background", async (t) => {

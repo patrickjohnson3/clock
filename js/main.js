@@ -112,6 +112,10 @@ let clockTimerId = null;
 let wakeLockSentinel = null;
 let wakeLockRequest = null;
 let webFontsRequested = false;
+const motionPreference = window.matchMedia?.(
+  "(prefers-reduced-motion: reduce)",
+);
+motionPreference?.addEventListener("change", syncMatrix);
 ui.setControlsFromState(state);
 ui.updateScrollHint();
 
@@ -130,8 +134,11 @@ function renderVisuals(nextState) {
   document.body.classList.toggle("neon-on", nextState.neon);
   document.body.style.fontFamily = nextState.font;
   matrix.refreshStyles();
+  syncMatrix();
+}
 
-  if (nextState.matrix && !document.hidden) {
+function syncMatrix() {
+  if (state.matrix && !document.hidden && !motionPreference?.matches) {
     matrix.start();
   } else {
     matrix.stop();
@@ -388,9 +395,7 @@ window.addEventListener("visibilitychange", () => {
   }
 
   startClockTicker();
-  if (state.matrix) {
-    matrix.start();
-  }
+  syncMatrix();
   syncWakeLock(state);
 });
 
