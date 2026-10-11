@@ -120,6 +120,13 @@ Configuration:
 - Prettier ignore: `.prettierignore`
 - CI quality checks: `.github/workflows/quality.yml`
 
+Panel layout regression check (requires a browser; Node fakes do not lay out CSS):
+serve the app and use a 404x816 viewport. Scroll past Leading Zero and Hide
+Seconds: their labels must remain separate, and the scroll cue must stay at the
+panel's bottom edge, not move over the settings. Check that the cue disappears at
+the bottom and returns when scrolling up, including after hiding and reopening
+the panel. Repeat in Light and Matrix modes and with Reduced Motion enabled.
+
 ## Notes
 
 - Audio starts after user interaction due to browser autoplay policies.
