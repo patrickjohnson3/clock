@@ -46,6 +46,10 @@ Use `Hide Panel` to collapse the panel. Use the subtle top handle to reopen it.
 While open, the panel shares the screen with an unobscured clock preview. Scroll
 the panel to reach additional controls; hiding it restores the full-screen clock.
 
+`Remember settings on this device` is off by default. If saving fails, a warning
+appears below it without interrupting the clock. After resolving browser storage
+restrictions, change a setting to retry; a successful save clears the warning.
+
 `Keep Screen Awake` requests a screen wake lock; the status below it reports
 whether it is active, paused, released, or unavailable. The checked toggle is your
 preference, not a guarantee that the browser will keep the screen on. After a

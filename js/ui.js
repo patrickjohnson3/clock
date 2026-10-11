@@ -6,6 +6,7 @@ export function createUI() {
     collapseBtn: document.getElementById("collapseBtn"),
     panelTab: document.getElementById("panelTab"),
     wakeLockStatus: document.getElementById("wakeLockStatus"),
+    storageStatus: document.getElementById("storageStatus"),
     toggles: {
       glitch: document.getElementById("glitchToggle"),
       glyph: document.getElementById("glyphToggle"),
@@ -54,6 +55,14 @@ export function createUI() {
 
   function setWakeLockStatus(message) {
     const status = refs.wakeLockStatus;
+    if (status && status.textContent !== message) {
+      status.textContent = message;
+      updateScrollHint();
+    }
+  }
+
+  function setStorageStatus(message) {
+    const status = refs.storageStatus;
     if (status && status.textContent !== message) {
       status.textContent = message;
       updateScrollHint();
@@ -159,6 +168,7 @@ export function createUI() {
     bindRange,
     setControlsFromState,
     setWakeLockStatus,
+    setStorageStatus,
     bindCollapse,
     bindScrollHint,
     updateScrollHint,

@@ -103,14 +103,15 @@ export function saveSettings(state) {
 
     if (!state.persistStorage) {
       localStorage.removeItem(STORAGE_KEY);
-      return;
+      return true;
     }
 
     const persistedState = { ...state };
     delete persistedState.persistStorage;
     delete persistedState.fullscreen;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedState));
+    return true;
   } catch {
-    // Ignore storage failures.
+    return false;
   }
 }

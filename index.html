@@ -57,9 +57,14 @@
           >
           <p id="wakeLockStatus" role="status"></p>
           <label
-            ><input type="checkbox" id="storageToggle" /> Persistent
-            Storage</label
+            ><input
+              type="checkbox"
+              id="storageToggle"
+              aria-describedby="storageStatus"
+            />
+            Remember settings on this device</label
           >
+          <p id="storageStatus" role="status"></p>
           <h2>Clock</h2>
           <label>
             Clock Size (%)

@@ -59,6 +59,7 @@ function createAppEnvironment(t, savedSettings, { renderers = false } = {}) {
     });
   }
   controls.set("wakeLockStatus", { textContent: "" });
+  controls.set("storageStatus", { textContent: "" });
   function createElement(tagName) {
     return Object.assign(new EventTarget(), {
       tagName,
@@ -718,6 +719,62 @@ test("settings saves are debounced and pending changes flush on unload", async (
   window.advanceTime(200);
   assert.equal(storageWrites.length, 4);
 });
+
+for (const failure of ["preference", "payload", "remove"]) {
+  for (const event of ["timeout", "visibilitychange", "beforeunload"]) {
+    test(`a ${failure} save failure is reported on ${event} and clears after a successful retry`, async (t) => {
+      const { document, window, saved, setToggle } = createAppEnvironment(t, {
+        hour24: false,
+      });
+      saved.set("unrelated", "keep");
+      const method = failure === "remove" ? "removeItem" : "setItem";
+      const key = failure === "preference" ? STORAGE_ENABLED_KEY : STORAGE_KEY;
+      const original = localStorage[method];
+      let blocked = true;
+      localStorage[method] = (...args) => {
+        if (blocked && args[0] === key) {
+          throw new DOMException(
+            "Storage quota exceeded",
+            "QuotaExceededError",
+          );
+        }
+        return original(...args);
+      };
+      await import(`../js/main.js?failed-save-${failure}-${event}`);
+      const status = document.getElementById("storageStatus");
+      const preference = document.getElementById("storageToggle");
+      if (failure === "remove") {
+        preference.checked = false;
+        preference.dispatchEvent(new Event("change"));
+      }
+      setToggle("hour24", true);
+      if (event === "timeout") window.advanceTime(120);
+      else {
+        document.hidden = event === "visibilitychange";
+        window.dispatchEvent(new Event(event));
+      }
+      assert.match(status.textContent, /could not.*saved settings/i);
+      assert.match(status.textContent, /retry/i);
+      assert.equal(window.matrixClock.getState().hour24, true);
+      assert.equal(preference.checked, failure !== "remove");
+      assert.equal(saved.get("unrelated"), "keep");
+
+      blocked = false;
+      document.hidden = false;
+      window.dispatchEvent(new Event("visibilitychange"));
+      setToggle("leadingZero", true);
+      window.advanceTime(120);
+      assert.equal(status.textContent, "");
+      assert.equal(
+        saved.get(STORAGE_ENABLED_KEY),
+        String(failure !== "remove"),
+      );
+      if (failure === "remove") assert.equal(saved.has(STORAGE_KEY), false);
+      else assert.equal(JSON.parse(saved.get(STORAGE_KEY)).hour24, true);
+      assert.equal(saved.get("unrelated"), "keep");
+    });
+  }
+}
 
 for (const optOut of [false, true]) {
   test(`backgrounding flushes a pending ${optOut ? "persistence opt-out" : "setting change"} before timers can freeze`, async (t) => {

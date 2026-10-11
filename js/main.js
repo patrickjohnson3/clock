@@ -233,17 +233,18 @@ function flushSave() {
   if (saveTimerId === null) return;
   window.clearTimeout(saveTimerId);
   saveTimerId = null;
-  saveSettings(state);
+  ui.setStorageStatus(
+    saveSettings(state)
+      ? ""
+      : "Could not update saved settings. Reloading may restore older preferences. Check browser storage permissions, then change a setting to retry.",
+  );
 }
 
 function scheduleSave() {
   if (saveTimerId !== null) {
     window.clearTimeout(saveTimerId);
   }
-  saveTimerId = window.setTimeout(() => {
-    saveTimerId = null;
-    saveSettings(state);
-  }, 120);
+  saveTimerId = window.setTimeout(flushSave, 120);
 }
 
 function updateState(partial) {

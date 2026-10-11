@@ -114,7 +114,7 @@ test("saving omits transient fields and disabling persistence removes only its p
     fullscreen: true,
     hour24: true,
   };
-  saveSettings(state);
+  assert.equal(saveSettings(state), true);
   assert.equal(saved.get(STORAGE_ENABLED_KEY), "true");
   const payload = JSON.parse(saved.get(STORAGE_KEY));
   assert.equal(payload.hour24, true);
@@ -122,7 +122,7 @@ test("saving omits transient fields and disabling persistence removes only its p
   assert.equal(Object.hasOwn(payload, "persistStorage"), false);
   assert.equal(state.fullscreen, true);
   assert.equal(state.persistStorage, true);
-  saveSettings({ ...state, persistStorage: false });
+  assert.equal(saveSettings({ ...state, persistStorage: false }), true);
   assert.equal(saved.has(STORAGE_KEY), false);
   assert.equal(saved.get(STORAGE_ENABLED_KEY), "false");
   assert.equal(saved.get("unrelated"), "keep");
@@ -135,6 +135,7 @@ test("unavailable storage and failures of each storage operation are tolerated",
   assert.doesNotThrow(() =>
     saveSettings({ ...DEFAULTS, persistStorage: true }),
   );
+  assert.equal(saveSettings({ ...DEFAULTS, persistStorage: true }), false);
   for (const operation of ["getItem", "setItem", "removeItem"]) {
     const storage = {
       getItem: () => "true",
@@ -151,6 +152,14 @@ test("unavailable storage and failures of each storage operation are tolerated",
     );
     assert.doesNotThrow(() =>
       saveSettings({ ...DEFAULTS, persistStorage: true }),
+    );
+    assert.equal(
+      saveSettings({ ...DEFAULTS, persistStorage: false }),
+      operation === "getItem",
+    );
+    assert.equal(
+      saveSettings({ ...DEFAULTS, persistStorage: true }),
+      operation !== "setItem",
     );
   }
 });
