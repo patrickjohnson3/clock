@@ -66,8 +66,11 @@
           >
           <p id="storageStatus" role="status"></p>
           <h2>Clock</h2>
-          <label>
-            Clock Size (%)
+          <div class="range-control">
+            <label for="clockScaleSlider">Clock Size (%)</label>
+            <output id="clockScaleOutput" for="clockScaleSlider" aria-live="off"
+              >100%</output
+            >
             <input
               type="range"
               id="clockScaleSlider"
@@ -76,7 +79,7 @@
               step="10"
               value="100"
             />
-          </label>
+          </div>
           <label
             ><input type="checkbox" id="hour24Toggle" /> 24-Hour Mode</label
           >
@@ -172,8 +175,14 @@
             />
             Dub Techno</label
           >
-          <label>
-            Sound Volume
+          <div class="range-control">
+            <label for="soundVolumeSlider">Sound Volume</label>
+            <output
+              id="soundVolumeOutput"
+              for="soundVolumeSlider"
+              aria-live="off"
+              >100%</output
+            >
             <input
               type="range"
               id="soundVolumeSlider"
@@ -182,7 +191,7 @@
               step="1"
               value="100"
             />
-          </label>
+          </div>
         </section>
       </div>
     </div>

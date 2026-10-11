@@ -63,6 +63,8 @@ function createAppEnvironment(t, savedSettings, { renderers = false } = {}) {
   controls.set("matrixModeHint", { hidden: true });
   controls.set("showAmPmHint", { hidden: true });
   controls.set("soundStatus", { textContent: "" });
+  controls.set("clockScaleOutput", { value: "" });
+  controls.set("soundVolumeOutput", { value: "" });
   function createElement(tagName) {
     return Object.assign(new EventTarget(), {
       tagName,
@@ -789,6 +791,34 @@ test("fullscreen stays browser-owned and restores its control after rejection", 
   assert.equal(window.matrixClock.getState().fullscreen, false);
   assert.equal(document.getElementById("fullscreenToggle").checked, false);
 });
+
+for (const [name, savedSettings, size, volume] of [
+  ["defaults", null, 100, 100],
+  ["restored", { clockScale: 150, soundVolume: 35 }, 150, 35],
+  ["clamped", { clockScale: 300, soundVolume: -10 }, 200, 0],
+  ["invalid", { clockScale: "150", soundVolume: "35" }, 100, 100],
+]) {
+  test(`range readouts reflect ${name} settings and subsequent input`, async (t) => {
+    const { document, window } = createAppEnvironment(t, savedSettings);
+    await import(`../js/main.js?range-readouts-${name}`);
+    const sizeOutput = document.getElementById("clockScaleOutput");
+    const volumeOutput = document.getElementById("soundVolumeOutput");
+    assert.equal(sizeOutput.value, `${size}%`);
+    assert.equal(volumeOutput.value, `${volume}%`);
+    const sizeSlider = document.getElementById("clockScaleSlider");
+    sizeSlider.value = "110";
+    sizeSlider.dispatchEvent(new Event("input"));
+    assert.equal(sizeOutput.value, "110%");
+    assert.equal(volumeOutput.value, `${volume}%`);
+    assert.equal(window.matrixClock.getState().clockScale, 110);
+    const volumeSlider = document.getElementById("soundVolumeSlider");
+    volumeSlider.value = "49";
+    volumeSlider.dispatchEvent(new Event("input"));
+    assert.equal(volumeOutput.value, "49%");
+    assert.equal(sizeOutput.value, "110%");
+    assert.equal(window.matrixClock.getState().soundVolume, 49);
+  });
+}
 
 test("settings saves are debounced and pending changes flush on unload", async (t) => {
   const { document, window, saved, storageWrites, setToggle } =

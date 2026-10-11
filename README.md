@@ -59,6 +59,7 @@ also requests it again when enabled.
 Use `Clock Size (%)` to enlarge the clock from 100% to 200% without changing its
 responsive default size. If enlarged text exceeds the screen, scroll the clock
 to reach the whole time; keyboard users can focus the clock and use arrow keys.
+Clock Size and Sound Volume show their current percentages beside their labels.
 
 Matrix mode keeps `Matrix Rain` and `Neon FX` enabled; choose Dark or Light mode
 to adjust them separately. `Show AM/PM` is unavailable in 24-hour mode, but its

@@ -255,6 +255,27 @@ label {
   line-height: 1.35;
 }
 
+.range-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.2rem 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.range-control label {
+  margin: 0;
+}
+
+.range-control input {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0;
+}
+
+.range-control output {
+  font-variant-numeric: tabular-nums;
+}
+
 #wakeLockStatus,
 #storageStatus,
 #matrixModeHint,

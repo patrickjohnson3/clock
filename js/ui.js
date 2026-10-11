@@ -33,6 +33,8 @@ export function createUI() {
     modeSelect: document.getElementById("modeSelect"),
     soundVolumeSlider: document.getElementById("soundVolumeSlider"),
     clockScaleSlider: document.getElementById("clockScaleSlider"),
+    soundVolumeOutput: document.getElementById("soundVolumeOutput"),
+    clockScaleOutput: document.getElementById("clockScaleOutput"),
   };
 
   function setChecked(el, value) {
@@ -116,6 +118,8 @@ export function createUI() {
     setHidden(refs.showAmPmHint, !state.hour24);
     setValue(refs.soundVolumeSlider, String(state.soundVolume));
     setValue(refs.clockScaleSlider, String(state.clockScale));
+    setValue(refs.soundVolumeOutput, `${state.soundVolume}%`);
+    setValue(refs.clockScaleOutput, `${state.clockScale}%`);
 
     setValue(refs.fontSelect, state.font);
 
