@@ -1,6 +1,7 @@
 const CACHE_PREFIX = `centered-clock:${self.registration.scope}:`;
 // Bump the version whenever any app-shell file changes, including this list.
-const CACHE_NAME = `${CACHE_PREFIX}v1`;
+const CACHE_VERSION = 2;
+const CACHE_NAME = `${CACHE_PREFIX}v${CACHE_VERSION}`;
 const APP_SHELL = [
   "./index.html",
   "./styles.css",
@@ -34,17 +35,18 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((names) =>
-        Promise.all(
-          names
-            .filter(
-              (name) => name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME,
-            )
-            .map((name) => caches.delete(name)),
-        ),
+    caches.keys().then((names) =>
+      Promise.all(
+        names
+          .filter((name) => {
+            if (!name.startsWith(CACHE_PREFIX)) return false;
+            const version = name.slice(CACHE_PREFIX.length).match(/^v(\d+)$/);
+            // A newer worker may already be populating its cache.
+            return version !== null && Number(version[1]) < CACHE_VERSION;
+          })
+          .map((name) => caches.delete(name)),
       ),
+    ),
   );
 });
 

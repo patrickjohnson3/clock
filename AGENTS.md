@@ -27,8 +27,9 @@ product documentation and the module map.
   through its `updateState` path so normalization, controls, and persistence agree.
 - `manifest.webmanifest` owns installation identity and launch scope; `sw.js` owns
   the versioned offline app shell. Keep their paths relative to the deployment
-  directory. Add/remove runtime assets in `APP_SHELL` and bump `CACHE_NAME`'s
-  version whenever any shell asset changes. Do not cache `sw.js` itself.
+  directory. Add/remove runtime assets in `APP_SHELL` and increase the integer
+  `CACHE_VERSION` whenever any shell asset changes; never reuse or decrease it.
+  Do not cache `sw.js` itself.
 - `js/config.js` owns defaults, storage keys, and tuning constants. Keep
   normalization in `js/state.js` and localStorage access and migrations in
   `js/settings.js`; these must not acquire UI or audio dependencies.
@@ -85,8 +86,10 @@ product documentation and the module map.
   focus styles, and reduced-motion handling when changing controls or effects.
 - Keep each offline shell release coherent: do not mix network-loaded HTML with
   older cached modules or force an updated worker to replace a running session.
-  Let updates wait until existing clock clients close. Delete only old caches
-  with this app's scope-specific prefix; do not cache external fonts or user state.
+  Let updates wait until existing clock clients close. Delete only lower-numbered
+  caches with this app's scope-specific prefix: newer workers can install during
+  activation. Preserve unrecognized cache names. Do not cache external fonts or
+  user state.
 
 ## Setup and Validation
 

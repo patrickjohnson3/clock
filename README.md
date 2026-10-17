@@ -171,10 +171,16 @@ enabled and use an isolated origin/profile rather than clearing real user data:
    the existing worker and offline app remain usable. Check installation on a
    physical target browser separately; desktop emulation does not prove its
    native install UI works.
+5. Keep an old release open with a second release waiting, then delay a required
+   asset while a third release installs. Close the old clock clients and finish
+   the download. The newest worker must retain its complete cache and launch
+   offline; the intermediate worker must not delete the newer release's cache.
 
 When changing shipped HTML, CSS, JavaScript, manifest, or icons, update the
-`APP_SHELL` list as needed and bump the cache version in `sw.js`. The worker is
-never served from that cache. No build step or generated site is involved.
+`APP_SHELL` list as needed and increase the integer `CACHE_VERSION` in `sw.js`.
+Never reuse or decrease it: activation removes only lower-numbered caches so that
+overlapping updates preserve newer releases. The worker is never served from
+that cache. No build step or generated site is involved.
 
 ## Notes
 

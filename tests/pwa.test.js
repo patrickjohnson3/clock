@@ -202,7 +202,7 @@ test("a missing cached asset falls back to the original network request", async 
 });
 
 test("activation removes only previous caches belonging to this app scope", async () => {
-  const old = `centered-clock:${scope}:old`;
+  const old = `centered-clock:${scope}:v1`;
   const unrelated = [
     "other-app-v1",
     "centered-clock:https://example.test/:old",
@@ -229,8 +229,36 @@ test("activation removes only previous caches belonging to this app scope", asyn
   );
 });
 
+test("activation preserves newer workers' caches and unrecognized cache versions", async () => {
+  const worker = await createWorker();
+  await worker.lifecycle("install");
+  const prefix = `centered-clock:${scope}:`;
+  const [current] = worker.stores.keys();
+  const version = Number(current.slice(prefix.length + 1));
+  assert.ok(Number.isSafeInteger(version) && version > 0);
+  const newerCaches = [
+    `${prefix}v${version + 1}`,
+    `${prefix}v${version + 9}`,
+    `${prefix}future-format`,
+  ];
+  const entries = new Map([
+    [`${scope}index.html`, new Response("newer shell")],
+  ]);
+  for (const name of newerCaches) worker.stores.set(name, entries);
+
+  await worker.lifecycle("activate");
+
+  for (const name of newerCaches) {
+    assert.equal(worker.stores.get(name), entries, name);
+    assert.equal(
+      await worker.stores.get(name).get(`${scope}index.html`).clone().text(),
+      "newer shell",
+    );
+  }
+});
+
 test("a failed installation rejects without deleting the previous working cache", async () => {
-  const old = `centered-clock:${scope}:old`;
+  const old = `centered-clock:${scope}:v1`;
   const worker = await createWorker({
     failInstall: true,
     initialCaches: [old],
