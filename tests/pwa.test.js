@@ -114,7 +114,7 @@ async function createWorker({ failInstall = false, initialCaches = [] } = {}) {
   };
 }
 
-test("offline installation includes every HTML asset, module dependency, and manifest icon", async () => {
+test("the document's module graph reaches the app and its assets are available offline", async () => {
   const worker = await createWorker();
   await worker.lifecycle("install");
   const urls = worker.installs.map((request) => request.url);
@@ -134,7 +134,19 @@ test("offline installation includes every HTML asset, module dependency, and man
     const url = new URL(path, scope);
     if (url.href.startsWith(scope)) expected.add(url.href.slice(scope.length));
   }
+  const entry = [...html.matchAll(/<script\b[^>]*>/g)].find(([tag]) =>
+    /\btype="module"/.test(tag),
+  );
+  assert.ok(entry, "The document must link its module entrypoint");
+  const entryPath = entry[0].match(/\bsrc="([^"]+)"/)?.[1];
+  assert.ok(entryPath, "The module entrypoint must have a source URL");
+  const entryURL = new URL(entryPath, scope);
+  assert.equal(entryURL.href, new URL("app.js", scope).href);
+  const modules = new Set();
   const visit = async (path) => {
+    if (modules.has(path)) return;
+    modules.add(path);
+    expected.add(path);
     const source = await readFile(new URL(path, root), "utf8");
     for (const [, dependency] of source.matchAll(
       /\bimport\s+(?:[^"']*?\s+from\s+)?["']([^"']+)["']/g,
@@ -142,13 +154,14 @@ test("offline installation includes every HTML asset, module dependency, and man
       const url = new URL(dependency, new URL(path, scope));
       assert.ok(url.href.startsWith(scope), "Modules must stay within the app");
       const relative = url.href.slice(scope.length);
-      if (!expected.has(relative)) {
-        expected.add(relative);
-        await visit(relative);
-      }
+      await visit(relative);
     }
   };
-  await visit("app.js");
+  await visit(entryURL.href.slice(scope.length));
+  assert.ok(
+    modules.has("js/main.js"),
+    "The linked module graph must reach the application orchestrator",
+  );
   const manifest = JSON.parse(
     await readFile(new URL("manifest.webmanifest", root), "utf8"),
   );
