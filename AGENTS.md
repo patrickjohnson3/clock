@@ -9,8 +9,9 @@ product documentation and the module map.
 
 - Preserve deployment as static HTML/CSS/native JavaScript modules. Node is for
   development tooling, not the browser runtime. There is no backend, bundler,
-  generated site, packaging step, or PWA configuration; do not introduce these as
-  incidental refactors.
+  generated site, or packaging step; do not introduce these as incidental refactors.
+  PWA installation and offline use are supported through the checked-in manifest,
+  icons, and service worker.
 - Keep asset URLs and module imports relative, including explicit `.js` import
   extensions. The live demo is hosted under `/clock/`, not the domain root.
 - Browser code uses ES modules and browser globals; do not introduce Node APIs or
@@ -21,8 +22,13 @@ product documentation and the module map.
 - `index.html` owns the app shell and controls; `styles.css` owns themes, effects,
   and responsive layout. `app.js` only imports `js/main.js`.
 - `js/main.js` owns application state, module composition, event wiring, rendering,
-  save scheduling, fullscreen, and wake-lock lifecycle. Route setting changes
+  save scheduling, fullscreen, wake-lock lifecycle, and optional service-worker
+  registration. Route setting changes
   through its `updateState` path so normalization, controls, and persistence agree.
+- `manifest.webmanifest` owns installation identity and launch scope; `sw.js` owns
+  the versioned offline app shell. Keep their paths relative to the deployment
+  directory. Add/remove runtime assets in `APP_SHELL` and bump `CACHE_NAME`'s
+  version whenever any shell asset changes. Do not cache `sw.js` itself.
 - `js/config.js` owns defaults, storage keys, and tuning constants. Keep
   normalization in `js/state.js` and localStorage access and migrations in
   `js/settings.js`; these must not acquire UI or audio dependencies.
@@ -77,6 +83,10 @@ product documentation and the module map.
   hidden, and do not immediately retry from the sentinel's `release` event.
 - Preserve mobile panel scrolling, safe-area/fullscreen positioning, keyboard
   focus styles, and reduced-motion handling when changing controls or effects.
+- Keep each offline shell release coherent: do not mix network-loaded HTML with
+  older cached modules or force an updated worker to replace a running session.
+  Let updates wait until existing clock clients close. Delete only old caches
+  with this app's scope-specific prefix; do not cache external fonts or user state.
 
 ## Setup and Validation
 
@@ -103,12 +113,18 @@ product documentation and the module map.
   layouts, panel scrolling and reopening, and keyboard focus. For audio/lifecycle
   changes, check repeated toggles, volume/muting, mixed sounds, tab hide/return,
   fullscreen exit, and wake-lock rejection/release as applicable.
+- For PWA changes, verify first load, service-worker-controlled offline reload,
+  `/clock/` launch paths, and upgrade from a cached release. Check failed asset
+  downloads retain the previous working release. See README's PWA checks; Node
+  worker fakes alone do not prove browser installation or update behavior.
 
 ## Repository Hygiene and Change Scope
 
 - `node_modules/` is generated and ignored. Never hand-edit or commit it.
   `package-lock.json` is tracked: regenerate it with npm when intentionally
   changing dependencies, and include it with the `package.json` change.
+- `icons/clock.svg` is the source artwork for the checked-in 192px and 512px PNG
+  exports. Regenerate both PNGs when changing the artwork; do not hand-edit them.
 - Browser localStorage is user-owned state. Use an isolated origin/profile for
   destructive persistence checks; never use `localStorage.clear()` in app code
   or delete unrelated origin data.

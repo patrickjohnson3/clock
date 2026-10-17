@@ -177,6 +177,32 @@ function createAppEnvironment(t, savedSettings, { renderers = false } = {}) {
   };
 }
 
+for (const rejected of [false, true]) {
+  test(`service worker registration is relative, deferred and optional: rejected=${rejected}`, async (t) => {
+    const { window } = createAppEnvironment(t, null);
+    const calls = [];
+    navigator.serviceWorker = {
+      register(url, options) {
+        calls.push({ url, options });
+        return rejected
+          ? Promise.reject(new Error("Offline storage is blocked"))
+          : Promise.resolve({});
+      },
+    };
+    await import(`../js/main.js?pwa-registration-${rejected}`);
+    assert.equal(calls.length, 0);
+    assert.deepEqual(window.matrixClock.getState(), DEFAULTS);
+    window.dispatchEvent(new Event("load"));
+    await new Promise(setImmediate);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url.href, new URL("../sw.js", import.meta.url).href);
+    assert.deepEqual(calls[0].options, { updateViaCache: "none" });
+    window.dispatchEvent(new Event("load"));
+    assert.equal(calls.length, 1);
+    assert.deepEqual(window.matrixClock.getState(), DEFAULTS);
+  });
+}
+
 test("optional fonts load once when a custom font is selected, not for System", async (t) => {
   const { document, stylesheets } = createAppEnvironment(t, null);
   await import("../js/main.js?optional-fonts");

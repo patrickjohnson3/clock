@@ -19,6 +19,7 @@ Live demo: [patrickjohnson3.github.io/clock](https://patrickjohnson3.github.io/c
   - Dub Techno
 - Global sound volume slider
 - Settings persistence toggle
+- PWA installation and offline use after the app shell has been cached
 
 ## Run Locally
 
@@ -33,6 +34,27 @@ python3 -m http.server 8000
 ```
 
 Then open `http://localhost:8000`.
+
+## Installation and Offline Use
+
+Open the live HTTPS site and use your browser's Install action. In Brave on
+Android, select Install in the "Install and create shortcut" menu; creating a
+shortcut alone is not the same as installing the standalone app. Installation
+availability and menu wording depend on the browser and device. HTTPS is required
+outside localhost ([installation requirements](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable)).
+
+Allow the first online visit to finish caching the app, then reload once. The
+clock, Matrix effects, and locally generated sounds can then work offline.
+Custom Google Fonts still need a connection unless the browser already has them;
+the clock falls back to a local monospace font. Offline asset caching is separate
+from the opt-in Remember settings preference. Clearing browser site data also
+removes the offline copy.
+
+An open clock stays on its cached release while an update downloads. After an
+online visit downloads the new worker, close **all** clock tabs and installed
+windows, then reopen to use it. Refresh alone may leave an update waiting. Updates
+do not forcibly reload the clock or interrupt sound; a failed app-shell download
+leaves the previous worker active.
 
 ## Controls
 
@@ -90,6 +112,9 @@ The sound toggles retain your selection while playback is blocked.
 - `index.html` - app shell and control markup
 - `styles.css` - layout and visual styling
 - `app.js` - module entrypoint
+- `manifest.webmanifest` - PWA identity, launch scope, and icons
+- `sw.js` - versioned offline app shell and update lifecycle
+- `icons/` - SVG source artwork and exported installation PNGs
 - `js/main.js` - app orchestration
 - `js/config.js` - defaults and tuneable constants
 - `js/state.js` - state normalization/invariants
@@ -126,6 +151,30 @@ Seconds: their labels must remain separate, and the scroll cue must stay at the
 panel's bottom edge, not move over the settings. Check that the cue disappears at
 the bottom and returns when scrolling up, including after hiding and reopening
 the panel. Repeat in Light and Matrix modes and with Reduced Motion enabled.
+
+### PWA Checks
+
+`npm test` checks manifest/icon validity, offline module coverage, worker cache
+behavior, and optional registration. For browser checks, keep the service worker
+enabled and use an isolated origin/profile rather than clearing real user data:
+
+1. Load online at the deployment base (including `/clock/`), wait for
+   `navigator.serviceWorker.ready`, and reload. Confirm the page is controlled
+   and the browser reports no manifest/installability errors.
+2. Switch offline and reload both the base URL and `index.html`. Check the clock,
+   panel, Matrix rain, and sound controls; custom fonts may fall back locally.
+3. For an upgrade, change a shell asset and bump the cache version in `sw.js`.
+   Keep an old controlled tab open: the new worker should wait while the old HTML
+   and modules remain together. Close all clock clients and reopen; verify the
+   new release works offline and only this scope's old caches are removed.
+4. Try an update with one listed asset unavailable: installation must fail while
+   the existing worker and offline app remain usable. Check installation on a
+   physical target browser separately; desktop emulation does not prove its
+   native install UI works.
+
+When changing shipped HTML, CSS, JavaScript, manifest, or icons, update the
+`APP_SHELL` list as needed and bump the cache version in `sw.js`. The worker is
+never served from that cache. No build step or generated site is involved.
 
 ## Notes
 

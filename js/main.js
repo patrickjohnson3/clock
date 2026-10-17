@@ -453,3 +453,19 @@ window.addEventListener("beforeunload", () => {
   releaseWakeLock();
   soundManager.stopAll();
 });
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener(
+    "load",
+    () => {
+      navigator.serviceWorker
+        .register(new URL("../sw.js", import.meta.url), {
+          updateViaCache: "none",
+        })
+        .catch(() => {
+          // Offline setup is optional; the online clock must keep working.
+        });
+    },
+    { once: true },
+  );
+}
