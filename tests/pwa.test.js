@@ -19,9 +19,16 @@ test("the linked manifest and PNG icons support installation at root and /clock/
   assert.notEqual(manifest.prefer_related_applications, true);
   for (const base of ["https://example.test/", scope]) {
     const manifestURL = new URL(href, base);
-    for (const key of ["id", "start_url", "scope"]) {
+    for (const key of ["start_url", "scope"]) {
       assert.equal(new URL(manifest[key], manifestURL).href, base, key);
     }
+    const startURL = new URL(manifest.start_url, manifestURL);
+    // Manifest IDs resolve from the start URL's origin, not its directory.
+    assert.equal(
+      new URL(manifest.id, startURL.origin).href,
+      "https://example.test/",
+      "Preserve the existing installation identity at either deployment path",
+    );
     for (const size of [192, 512]) {
       const icon = manifest.icons.find(
         (icon) => icon.sizes === `${size}x${size}`,

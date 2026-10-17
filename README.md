@@ -154,6 +154,14 @@ the panel. Repeat in Light and Matrix modes and with Reduced Motion enabled.
 
 ### PWA Checks
 
+The existing manifest `id: "./"` identifies the app by its origin root, even when
+launched from `/clock/`: unlike `start_url` and `scope`, the
+[`id` member resolves against the start URL's origin](https://www.w3.org/TR/appmanifest/#id-member).
+Keep that identity stable for existing installations. Root and subdirectory
+deployments on the same origin share an installation identity; independently
+installable copies need distinct identities. Changing or removing the current ID
+for `/clock/` requires an explicit installation-migration decision.
+
 `npm test` checks manifest/icon validity, offline module coverage, worker cache
 behavior, and optional registration. For browser checks, keep the service worker
 enabled and use an isolated origin/profile rather than clearing real user data:
