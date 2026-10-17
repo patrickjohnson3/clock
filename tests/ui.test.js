@@ -6,6 +6,16 @@ import { createUI } from "../js/ui.js";
 import { normalizeState } from "../js/state.js";
 import { installGlobals } from "./helpers/audio.js";
 
+test("the decorative Matrix canvas is hidden from assistive technology", async () => {
+  const html = await readFile(
+    new URL("../index.html", import.meta.url),
+    "utf8",
+  );
+  const canvas = html.match(/<canvas\b[^>]*\bid="matrix"[^>]*>/)?.[0];
+  assert.ok(canvas, "The Matrix renderer must retain its canvas");
+  assert.match(canvas, /\baria-hidden="true"/);
+});
+
 test("the toggle map covers the HTML checkboxes and synchronizes every state key", async (t) => {
   const html = await readFile(
     new URL("../index.html", import.meta.url),
