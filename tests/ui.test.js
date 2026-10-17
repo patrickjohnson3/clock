@@ -48,6 +48,68 @@ test("the toggle map covers the HTML checkboxes and synchronizes every state key
   }
 });
 
+test("panel buttons hide and reopen controls with matching inert states and focus", (t) => {
+  const elements = new Map();
+  const classes = new Set();
+  const controls = {
+    inert: false,
+    scrollHeight: 600,
+    clientHeight: 200,
+    scrollTop: 0,
+    classList: {
+      contains: (name) => classes.has(name),
+      remove: (name) => classes.delete(name),
+      toggle(name, enabled) {
+        if (enabled) classes.add(name);
+        else classes.delete(name);
+      },
+    },
+  };
+  elements.set("controls", controls);
+  const document = {
+    activeElement: null,
+    getElementById: (id) => elements.get(id) ?? null,
+  };
+  for (const id of ["collapseBtn", "panelTab"]) {
+    elements.set(
+      id,
+      Object.assign(new EventTarget(), {
+        inert: id === "panelTab",
+        focus() {
+          if (this.inert || (id === "collapseBtn" && controls.inert)) return;
+          document.activeElement = this;
+        },
+      }),
+    );
+  }
+  installGlobals(t, {
+    document,
+    window: { requestAnimationFrame: (callback) => callback() },
+  });
+  const ui = createUI();
+  ui.bindCollapse();
+  ui.updateScrollHint();
+  const hideButton = elements.get("collapseBtn");
+  const showButton = elements.get("panelTab");
+  hideButton.focus();
+
+  for (let cycle = 0; cycle < 2; cycle += 1) {
+    hideButton.dispatchEvent(new Event("click"));
+    assert.equal(classes.has("collapsed"), true);
+    assert.equal(controls.inert, true);
+    assert.equal(showButton.inert, false);
+    assert.equal(document.activeElement, showButton);
+    assert.equal(classes.has("show-scroll-hint"), false);
+
+    showButton.dispatchEvent(new Event("click"));
+    assert.equal(classes.has("collapsed"), false);
+    assert.equal(controls.inert, false);
+    assert.equal(showButton.inert, true);
+    assert.equal(document.activeElement, hideButton);
+    assert.equal(classes.has("show-scroll-hint"), true);
+  }
+});
+
 test("wake lock status updates do not repeat an unchanged accessible message", (t) => {
   let textContent = "";
   let writes = 0;
