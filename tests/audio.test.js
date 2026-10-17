@@ -62,6 +62,43 @@ for (const [key, createEngine] of Object.entries({
   ...factories,
   dubTechno: createDubTechnoEngine,
 })) {
+  test(`${key} honors mute before playback and restores volume without restarting`, (t) => {
+    const window = createWindow();
+    installGlobals(t, {
+      window,
+      document: Object.assign(new EventTarget(), { hidden: false }),
+    });
+    const context = createAudioContext();
+    const config = TUNING.audio[key];
+    const engine = createEngine(config, { getContext: () => context });
+    engine.setVolume(0);
+    assert.equal(context.nodes.length, 0, "Setting volume keeps audio lazy");
+    engine.start();
+    const outputs = context.nodes.filter((node) =>
+      node.connections.includes(context.destination),
+    );
+    assert.equal(outputs.length, 1, "The engine must have a master output");
+    const [output] = outputs;
+    assert.equal(output.gain.value, 0, "Playback must start muted");
+    const playing = [...context.activeSources];
+    const sourceCount = context.sources.length;
+    assert.ok(playing.length > 0);
+
+    for (const [volume, expected] of [
+      [0.5, config.baseVolume / 2],
+      [0, 0],
+      [1, config.baseVolume],
+    ]) {
+      engine.setVolume(volume);
+      assert.equal(output.gain.value, expected, `Volume ${volume}`);
+      assert.deepEqual(context.activeSources, playing);
+      assert.equal(context.sources.length, sourceCount);
+    }
+    engine.stop();
+    assert.equal(context.activeSources.length, 0);
+    assert.equal(window.pendingTimerCount, 0);
+  });
+
   test(`${key} leaves context playback permission to its owner`, (t) => {
     installGlobals(t, {
       window: createWindow(),

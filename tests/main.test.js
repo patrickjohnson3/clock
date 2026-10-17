@@ -427,12 +427,28 @@ test("turning all sounds off suspends audio until a sound is enabled again", asy
   assert.equal(context.state, "running");
   assert.equal(context.activeSources.length, 1);
   assert.equal(getContextCount(), 1);
+  const outputs = context.nodes.filter((node) =>
+    node.connections.includes(context.destination),
+  );
+  assert.ok(outputs.length > 0);
+  assert.ok(outputs.every((node) => node.gain.value > 0));
+  const playing = [...context.activeSources];
+  const sourceCount = context.sources.length;
   const volume = document.getElementById("soundVolumeSlider");
   volume.value = "0";
   volume.dispatchEvent(new Event("input"));
   assert.equal(context.state, "running");
   assert.equal(context.activeSources.length, 1);
   assert.match(status.textContent, /muted.*0%/i);
+  for (const output of outputs)
+    assert.equal(output.gain.value, 0, "Muted master outputs must be silent");
+
+  volume.value = "50";
+  volume.dispatchEvent(new Event("input"));
+  assert.ok(outputs.every((node) => node.gain.value > 0));
+  assert.match(status.textContent, /playing/i);
+  assert.deepEqual(context.activeSources, playing);
+  assert.equal(context.sources.length, sourceCount);
 });
 
 for (const afterFailure of ["off", "playing"]) {
