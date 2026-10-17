@@ -12,9 +12,9 @@ export function normalizeState(state) {
     hideSeconds: Boolean(state.hideSeconds),
     reducedMotion: Boolean(state.reducedMotion),
     clockScale: Number.isFinite(state.clockScale)
-      ? Math.max(100, Math.min(200, state.clockScale))
+      ? Math.round(Math.max(100, Math.min(200, state.clockScale)) / 10) * 10
       : 100,
-    soundVolume: clampSoundVolume(state.soundVolume),
+    soundVolume: Math.round(clampSoundVolume(state.soundVolume)),
     wakeLock: Boolean(state.wakeLock),
   };
 

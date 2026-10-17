@@ -5,11 +5,16 @@ import { loadSettings, saveSettings } from "../js/settings.js";
 import { normalizeState } from "../js/state.js";
 import { installGlobals } from "./helpers/audio.js";
 
-test("clock size defaults to 100 percent and stays within 100-200 percent", () => {
+test("clock size defaults to 100 percent and snaps to 10-percent steps within 100-200", () => {
   assert.equal(DEFAULTS.clockScale, 100);
   for (const [value, expected] of [
     [100, 100],
+    [104.99, 100],
+    [105, 110],
+    [105.01, 110],
     [150, 150],
+    [194.99, 190],
+    [195, 200],
     [200, 200],
     [0, 100],
     [250, 200],

@@ -130,6 +130,33 @@ test("loading applies mode and numeric invariants but never restores fullscreen"
   assert.equal(state.persistStorage, true);
 });
 
+test("saved ranges snap to native slider steps with ties rounded upward", (t) => {
+  const saved = installStorage(t, [[STORAGE_ENABLED_KEY, "true"]]);
+  for (const [clockScale, soundVolume, size, volume] of [
+    [100, 0, 100, 0],
+    [104.99, 0.49, 100, 0],
+    [105, 0.5, 110, 1],
+    [105.01, 37.49, 110, 37],
+    [154.99, 37.5, 150, 38],
+    [155, 37.51, 160, 38],
+    [194.99, 99.49, 190, 99],
+    [195, 99.5, 200, 100],
+    [200, 100, 200, 100],
+    [-1, -1, 100, 0],
+    [250, 150, 200, 100],
+  ]) {
+    saved.set(STORAGE_KEY, JSON.stringify({ clockScale, soundVolume }));
+    const state = loadSettings();
+    assert.equal(state.clockScale, size, `Clock size from ${clockScale}`);
+    assert.equal(state.soundVolume, volume, `Volume from ${soundVolume}`);
+    assert.equal(saveSettings(state), true);
+    const payload = JSON.parse(saved.get(STORAGE_KEY));
+    assert.equal(payload.clockScale, size);
+    assert.equal(payload.soundVolume, volume);
+    assert.deepEqual(loadSettings(), state);
+  }
+});
+
 test("saving omits transient fields and disabling persistence removes only its payload", (t) => {
   const saved = installStorage(t, [["unrelated", "keep"]]);
   const state = {

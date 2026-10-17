@@ -1135,6 +1135,7 @@ for (const transition of ["toggle off", "browser enters"]) {
 for (const [name, savedSettings, size, volume] of [
   ["defaults", null, 100, 100],
   ["restored", { clockScale: 150, soundVolume: 35 }, 150, 35],
+  ["fractional", { clockScale: 105, soundVolume: 37.5 }, 110, 38],
   ["clamped", { clockScale: 300, soundVolume: -10 }, 200, 0],
   ["invalid", { clockScale: "150", soundVolume: "35" }, 100, 100],
 ]) {
@@ -1146,12 +1147,16 @@ for (const [name, savedSettings, size, volume] of [
     assert.equal(sizeOutput.value, `${size}%`);
     assert.equal(volumeOutput.value, `${volume}%`);
     const sizeSlider = document.getElementById("clockScaleSlider");
+    const volumeSlider = document.getElementById("soundVolumeSlider");
+    assert.equal(sizeSlider.value, String(size));
+    assert.equal(volumeSlider.value, String(volume));
+    assert.equal(window.matrixClock.getState().clockScale, size);
+    assert.equal(window.matrixClock.getState().soundVolume, volume);
     sizeSlider.value = "110";
     sizeSlider.dispatchEvent(new Event("input"));
     assert.equal(sizeOutput.value, "110%");
     assert.equal(volumeOutput.value, `${volume}%`);
     assert.equal(window.matrixClock.getState().clockScale, 110);
-    const volumeSlider = document.getElementById("soundVolumeSlider");
     volumeSlider.value = "49";
     volumeSlider.dispatchEvent(new Event("input"));
     assert.equal(volumeOutput.value, "49%");

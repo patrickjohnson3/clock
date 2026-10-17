@@ -1,6 +1,6 @@
 const CACHE_PREFIX = `centered-clock:${self.registration.scope}:`;
 // Bump the version whenever any app-shell file changes, including this list.
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 const CACHE_NAME = `${CACHE_PREFIX}v${CACHE_VERSION}`;
 const APP_SHELL = [
   "./index.html",
